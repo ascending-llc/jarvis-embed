@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PawfectPups</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a2e; }
+
+    /* Nav */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 48px; background: #fff;
+      box-shadow: 0 1px 0 #e5e7eb; position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo { font-size: 1.4rem; font-weight: 700; color: #6366f1; }
+    .nav-links { display: flex; gap: 24px; list-style: none; }
+    .nav-links a { font-size: 0.95rem; color: #374151; text-decoration: none; }
+    .nav-links a:hover { color: #6366f1; }
+    .btn { padding: 8px 20px; border-radius: 8px; background: #6366f1; color: #fff; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; }
+
+    /* Hero */
+    .hero { text-align: center; padding: 96px 24px 64px; background: linear-gradient(135deg, #ede9fe, #fce7f3); }
+    .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 16px; }
+    .hero p { font-size: 1.2rem; color: #6b7280; max-width: 480px; margin: 0 auto 32px; }
+    .hero .btn { padding: 14px 36px; font-size: 1rem; box-shadow: 0 4px 14px rgba(99,102,241,.4); }
+
+    /* Stats */
+    .stats { display: flex; justify-content: center; gap: 48px; padding: 48px 24px; border-bottom: 1px solid #f3f4f6; }
+    .stat { text-align: center; }
+    .stat-number { font-size: 2.2rem; font-weight: 800; color: #6366f1; }
+    .stat-label { font-size: 0.85rem; color: #9ca3af; margin-top: 4px; }
+
+    /* Services */
+    .services { padding: 72px 48px; background: #f9fafb; }
+    .services h2 { text-align: center; font-size: 2rem; margin-bottom: 40px; }
+    .service-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto; }
+    .service-card { background: #fff; border-radius: 16px; padding: 28px 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .service-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.10); transition: .2s; }
+    .service-icon { font-size: 2.4rem; margin-bottom: 12px; }
+    .service-card h3 { font-size: 1rem; margin-bottom: 8px; }
+    .service-card p { font-size: 0.85rem; color: #6b7280; }
+
+    /* Testimonials */
+    .testimonials { padding: 72px 48px; }
+    .testimonials h2 { text-align: center; font-size: 2rem; margin-bottom: 40px; }
+    .testimonial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto; }
+    .testimonial { background: #f9fafb; border-radius: 16px; padding: 24px; border-left: 4px solid #6366f1; }
+    .testimonial p { font-size: 0.95rem; color: #374151; margin-bottom: 12px; }
+    .testimonial cite { font-size: 0.85rem; color: #6b7280; font-style: normal; font-weight: 600; }
+
+    /* Footer */
+    footer { text-align: center; padding: 32px; background: #1a1a2e; color: #9ca3af; font-size: 0.85rem; }
+
+    /* Login modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 20px; padding: 40px 32px; width: 360px; text-align: center; box-shadow: 0 24px 64px rgba(0,0,0,.18); }
+    .modal h2 { font-size: 1.4rem; margin-bottom: 8px; }
+    .modal p { color: #6b7280; font-size: 0.9rem; margin-bottom: 24px; }
+    .google-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 12px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+      background: #fff; cursor: pointer; font-size: 0.95rem; font-weight: 600;
+    }
+    .google-btn:hover { background: #f9fafb; }
+    .modal-close { margin-top: 16px; background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.85rem; }
+
+    /* Chat bubble */
+    #chat-bubble { position: fixed; bottom: 24px; right: 24px; z-index: 1000; }
+    #chat-toggle {
+      width: 60px; height: 60px; border-radius: 50%; background: #6366f1; border: none;
+      cursor: pointer; font-size: 26px; box-shadow: 0 4px 16px rgba(99,102,241,.45);
+    }
+    #chat-toggle:hover { transform: scale(1.08); transition: .2s; }
+    #chat-panel {
+      display: none; position: absolute; bottom: 72px; right: 0;
+      width: 380px; height: 560px; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,.18); background: #f9fafb;
+    }
+    #chat-panel.open { display: block; }
+    #chat-placeholder {
+      width: 100%; height: 100%; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      font-size: 0.9rem; color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo">🐾 PawfectPups</div>
+    <ul class="nav-links">
+      <li><a href="#services">Services</a></li>
+      <li><a href="#testimonials">Reviews</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <button class="btn" id="nav-login-btn">Sign In</button>
+  </nav>
+
+  <section class="hero">
+    <h1>Where Tails Never Stop Wagging</h1>
+    <p>Premium grooming, daycare, and boarding for your furry family member.</p>
+    <button class="btn" id="hero-btn">Book an Appointment</button>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><div class="stat-number">2,400+</div><div class="stat-label">Happy Pups</div></div>
+    <div class="stat"><div class="stat-number">12</div><div class="stat-label">Years Experience</div></div>
+    <div class="stat"><div class="stat-number">4.9★</div><div class="stat-label">Average Rating</div></div>
+    <div class="stat"><div class="stat-number">100%</div><div class="stat-label">Cage-Free</div></div>
+  </section>
+
+  <section class="services" id="services">
+    <h2>Our Services</h2>
+    <div class="service-grid">
+      <div class="service-card"><div class="service-icon">✂️</div><h3>Full Grooming</h3><p>Bath, trim, nail clip & blowout</p></div>
+      <div class="service-card"><div class="service-icon">🏡</div><h3>Doggy Daycare</h3><p>Supervised play in our yard</p></div>
+      <div class="service-card"><div class="service-icon">🌙</div><h3>Overnight Boarding</h3><p>Comfy beds & bedtime stories</p></div>
+      <div class="service-card"><div class="service-icon">🛁</div><h3>Self-Serve Bath</h3><p>Our tubs, your schedule</p></div>
+      <div class="service-card"><div class="service-icon">🐶</div><h3>Puppy Package</h3><p>First-time spa day for new pups</p></div>
+      <div class="service-card"><div class="service-icon">🌿</div><h3>Flea Treatment</h3><p>Natural flea & tick removal</p></div>
+    </div>
+  </section>
+
+  <section class="testimonials" id="testimonials">
+    <h2>What Pet Parents Say</h2>
+    <div class="testimonial-grid">
+      <div class="testimonial">
+        <p>"My golden retriever Biscuit comes home looking like a show dog every single time."</p>
+        <cite>— Sarah M.</cite>
+      </div>
+      <div class="testimonial">
+        <p>"The daycare staff knows every dog by name. I feel safe leaving Max here while I work."</p>
+        <cite>— James T.</cite>
+      </div>
+      <div class="testimonial">
+        <p>"Daily photo updates and a happy dog when we got back. 10/10."</p>
+        <cite>— Priya K.</cite>
+      </div>
+    </div>
+  </section>
+
+  <footer id="contact">
+    <p>📍 123 Bark Avenue, Puptown USA &nbsp;|&nbsp; 📞 (555) 867-5309 &nbsp;|&nbsp; ✉️ hello@pawfectpups.com</p>
+    <p style="margin-top:8px;">© 2025 PawfectPups. All rights reserved.</p>
+  </footer>
+
+  <!-- Login modal -->
+  <div class="modal-overlay" id="login-modal">
+    <div class="modal">
+      <h2>Welcome Back!</h2>
+      <p>Sign in to chat with our AI assistant.</p>
+      <button class="google-btn" id="google-sign-in-btn">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#4285F4" d="M44.5 20H24v8.5h11.7C34.1 33.3 29.6 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l6-6C34.3 5.9 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11.1 0 19.6-7.6 19.6-20 0-1.3-.1-2.7-.1-4z"/>
+        </svg>
+        Continue with Google
+      </button>
+      <button class="modal-close" id="modal-close">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Chat bubble -->
+  <div id="chat-bubble">
+    <button id="chat-toggle">💬</button>
+    <div id="chat-panel">
+      <div id="chat-placeholder">
+        <span style="font-size:2rem">🐾</span>
+        <span>Sign in to chat with our AI assistant</span>
+        <button class="btn" id="chat-login-btn">Sign In</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/sdk/index.global.js"></script>
+  <script>
+    const Jarvis = window.JarvisEmbed.JarvisEmbed;
+
+    let googleClientId;
+    let chatOpen = false;
+
+    async function loadConfig() {
+      const res = await fetch('/api/config');
+      const config = await res.json();
+      googleClientId = config.googleClientId;
+    }
+
+    function buildGoogleAuthUrl(redirectUri) {
+      const params = new URLSearchParams({
+        client_id: googleClientId,
+        redirect_uri: redirectUri,
+        response_type: 'code',
+        scope: 'openid email profile',
+        access_type: 'online',
+      });
+      return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    }
+
+    function openModal() { document.getElementById('login-modal').classList.add('open'); }
+    function closeModal() { document.getElementById('login-modal').classList.remove('open'); }
+
+    function startGoogleLogin() {
+      closeModal();
+      fetch('/api/config')
+        .then(r => r.json())
+        .then(({ googleClientId, redirectUri }) => {
+          const params = new URLSearchParams({
+            client_id: googleClientId,
+            redirect_uri: redirectUri,
+            response_type: 'code',
+            scope: 'openid email profile',
+            access_type: 'online',
+          });
+          window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+        });
+    }
+
+    function mountChat(token) {
+      document.getElementById('chat-placeholder').remove();
+      new Jarvis({
+        provider: 'google',
+        token,
+        container: document.getElementById('chat-panel'),
+        width: '100%',
+        height: '100%',
+      });
+    }
+
+    function toggleChat() {
+      chatOpen = !chatOpen;
+      document.getElementById('chat-panel').classList.toggle('open', chatOpen);
+    }
+
+    document.getElementById('nav-login-btn').addEventListener('click', openModal);
+    document.getElementById('hero-btn').addEventListener('click', openModal);
+    document.getElementById('chat-login-btn').addEventListener('click', openModal);
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('google-sign-in-btn').addEventListener('click', startGoogleLogin);
+    document.getElementById('chat-toggle').addEventListener('click', toggleChat);
+
+    // On return from OAuth redirect, the token is in sessionStorage
+    const storedToken = sessionStorage.getItem('google_id_token');
+    if (storedToken) {
+      sessionStorage.removeItem('google_id_token');
+      mountChat(storedToken);
+      document.getElementById('nav-login-btn').textContent = 'Signed In';
+      // Open the chat panel automatically
+      chatOpen = true;
+      document.getElementById('chat-panel').classList.add('open');
+    }
+  </script>
+
+</body>
+</html>

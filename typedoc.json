@@ -1,0 +1,16 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "name": "Jarvis Embed SDK",
+  "readme": "README.md",
+  "includeVersion": true,
+  "disableSources": false,
+  "categorizeByGroup": true,
+  "groupOrder": ["Classes", "Interfaces", "Type Aliases", "Variables", "Functions"],
+  "navigationLinks": {
+    "GitHub": "https://github.com/your-org/jarvis-embed",
+    "Docs": "./docs"
+  },
+  "plugin": [],
+  "theme": "default"
+}

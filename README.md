@@ -86,7 +86,7 @@ Removes the iframe and cleans up the `window` message listener. Call this on unm
 Configures the embedded chat with one or more [MCP](https://modelcontextprotocol.io) server URLs. If called before the iframe is ready, the servers are queued and sent automatically once the SDK is ready.
 
 ```ts
-jarvis.setMcpServers(['https://my-mcp-server.com/sse']);
+jarvis.setMcpServers(['aws-knowledge']);
 ```
 
 ---

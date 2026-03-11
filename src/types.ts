@@ -14,15 +14,9 @@ type BaseConfig = {
   height?: string;
   apiUrl?: string;
   debug?: boolean;
-  onReady?: (session: Session) => void;
+  onReady?: (jarvisToken: string) => void;
   onError?: (error: Error) => void;
   onMessage?: (data: unknown) => void;
 };
 
 export type JarvisConfig = BaseConfig & AuthPayload;
-
-export interface Session {
-  token: string;
-  provider: AuthProvider;
-  iframe: HTMLIFrameElement;
-}

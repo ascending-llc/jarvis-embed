@@ -1,11 +1,8 @@
 require('dotenv').config();
 const express = require('express');
-const path = require('path');
 
 const app = express();
 app.use(express.json());
-app.use(express.static(__dirname));
-app.use('/sdk', express.static(path.join(__dirname, '../../dist')));
 
 // Expose public config to the frontend (client secret never leaves the server)
 app.get('/api/config', (req, res) => {
@@ -40,7 +37,5 @@ app.post('/api/google/token', async (req, res) => {
   res.json({ token: data.id_token });
 });
 
-app.get('/redirect', (req, res) => res.sendFile(path.join(__dirname, 'redirect.html')));
-
 const port = process.env.PORT || 5500;
-app.listen(port, () => console.log(`Running at http://localhost:${port}`));
+app.listen(port, () => console.log(`API server running at http://localhost:${port}`));

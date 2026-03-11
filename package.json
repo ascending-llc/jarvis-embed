@@ -12,29 +12,16 @@
       "require": "./dist/index.js"
     }
   },
-  "files": [
-    "dist",
-    "README.md"
-  ],
   "scripts": {
+    "prepare": "npm run build",
     "build": "tsup",
     "dev": "tsup --watch",
     "type-check": "tsc --noEmit",
     "docs": "typedoc",
-    "prepublishOnly": "npm run type-check && npm run build"
+    "setup": "npm install && npm run build && npm install --prefix examples/vanilla && npm install --prefix examples/react",
+    "example:vanilla": "npm start --prefix examples/vanilla",
+    "example:react": "npm start --prefix examples/react"
   },
-  "keywords": [
-    "jarvis",
-    "ai",
-    "assistant",
-    "embed",
-    "chat",
-    "widget",
-    "sdk",
-    "oauth",
-    "iframe"
-  ],
-  "license": "MIT",
   "devDependencies": {
     "tsup": "^8.3.0",
     "typescript": "^5.7.0",

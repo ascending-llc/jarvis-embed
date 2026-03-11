@@ -79,12 +79,42 @@
       width: 380px; height: 560px; border-radius: 16px; overflow: hidden;
       box-shadow: 0 12px 40px rgba(0,0,0,.18); background: #f9fafb;
     }
-    #chat-panel.open { display: block; }
     #chat-placeholder {
       width: 100%; height: 100%; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 12px;
       font-size: 0.9rem; color: #6b7280;
     }
+    #mcp-bar {
+      display: none; align-items: center; gap: 8px; padding: 8px;
+      background: #f3f4f6; border-bottom: 1px solid #e5e7eb;
+    }
+    #mcp-dropdown-wrapper { position: relative; flex: 1; }
+    #mcp-dropdown-btn {
+      width: 100%; padding: 5px 10px; background: #fff; border: 1px solid #d1d5db;
+      border-radius: 6px; font-size: 0.8rem; text-align: left; cursor: pointer;
+    }
+    #mcp-dropdown-menu {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #fff; border: 1px solid #d1d5db; border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.12); z-index: 10; overflow: hidden;
+    }
+    #mcp-dropdown-menu.open { display: block; }
+    #mcp-search {
+      width: 100%; padding: 8px 10px; border: none; border-bottom: 1px solid #e5e7eb;
+      font-size: 0.8rem; outline: none;
+    }
+    #mcp-list { max-height: 180px; overflow-y: auto; }
+    #mcp-list label {
+      display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+      font-size: 0.82rem; cursor: pointer;
+    }
+    #mcp-list label:hover { background: #f3f4f6; }
+    #mcp-apply {
+      padding: 5px 14px; background: #6366f1; color: #fff;
+      border: none; border-radius: 6px; font-size: 0.8rem; cursor: pointer; white-space: nowrap;
+    }
+    #chat-iframe-wrapper { flex: 1; overflow: hidden; }
+    #chat-panel.open { display: flex; flex-direction: column; }
   </style>
 </head>
 <body>
@@ -171,6 +201,17 @@
         <span>Sign in to chat with our AI assistant</span>
         <button class="btn" id="chat-login-btn">Sign In</button>
       </div>
+      <div id="mcp-bar">
+        <div id="mcp-dropdown-wrapper">
+          <button id="mcp-dropdown-btn">Select tools...</button>
+          <div id="mcp-dropdown-menu">
+            <input id="mcp-search" type="text" placeholder="Search..." />
+            <div id="mcp-list"></div>
+          </div>
+        </div>
+        <button id="mcp-apply">Apply</button>
+      </div>
+      <div id="chat-iframe-wrapper"></div>
     </div>
   </div>
 
@@ -178,55 +219,105 @@
   <script>
     const Jarvis = window.JarvisEmbed.JarvisEmbed;
 
-    let googleClientId;
     let chatOpen = false;
-
-    async function loadConfig() {
-      const res = await fetch('/api/config');
-      const config = await res.json();
-      googleClientId = config.googleClientId;
-    }
-
-    function buildGoogleAuthUrl(redirectUri) {
-      const params = new URLSearchParams({
-        client_id: googleClientId,
-        redirect_uri: redirectUri,
-        response_type: 'code',
-        scope: 'openid email profile',
-        access_type: 'online',
-      });
-      return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-    }
 
     function openModal() { document.getElementById('login-modal').classList.add('open'); }
     function closeModal() { document.getElementById('login-modal').classList.remove('open'); }
 
     function startGoogleLogin() {
       closeModal();
-      fetch('/api/config')
-        .then(r => r.json())
-        .then(({ googleClientId, redirectUri }) => {
-          const params = new URLSearchParams({
-            client_id: googleClientId,
-            redirect_uri: redirectUri,
-            response_type: 'code',
-            scope: 'openid email profile',
-            access_type: 'online',
-          });
-          window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-        });
+      const params = new URLSearchParams({
+        client_id: config.googleClientId,
+        redirect_uri: config.redirectUri,
+        response_type: 'code',
+        scope: 'openid email profile',
+        access_type: 'online',
+      });
+      window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    }
+
+    let jarvis;
+    let config = {};
+
+    fetch('/api/config')
+      .then(r => r.json())
+      .then(data => {
+        config = data;
+
+        // On return from OAuth redirect, the token is in sessionStorage
+        const storedToken = sessionStorage.getItem('google_id_token');
+        if (storedToken) {
+          sessionStorage.removeItem('google_id_token');
+          mountChat(storedToken);
+          document.getElementById('nav-login-btn').textContent = 'Signed In';
+          chatOpen = true;
+          document.getElementById('chat-panel').classList.add('open');
+        }
+      });
+
+    let allServers = [];
+
+    async function fetchAndShowMcpServers(jarvisToken) {
+      const res = await fetch(`${config.jarvisUrl}/api/mcp/servers`, {
+        headers: { Authorization: `Bearer ${jarvisToken}` },
+      });
+      if (!res.ok) return;
+
+      const data = await res.json();
+      allServers = Object.keys(data);
+      if (allServers.length === 0) return;
+
+      renderServerList(allServers);
+      document.getElementById('mcp-bar').style.display = 'flex';
+    }
+
+    function renderServerList(names) {
+      const list = document.getElementById('mcp-list');
+      list.innerHTML = '';
+      names.forEach((name) => {
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" value="${name}" /> ${name}`;
+        list.appendChild(label);
+      });
     }
 
     function mountChat(token) {
       document.getElementById('chat-placeholder').remove();
-      new Jarvis({
+
+      jarvis = new Jarvis({
         provider: 'google',
         token,
-        container: document.getElementById('chat-panel'),
+        apiUrl: config.jarvisUrl,
+        container: document.getElementById('chat-iframe-wrapper'),
         width: '100%',
         height: '100%',
+        onReady: (jarvisToken) => fetchAndShowMcpServers(jarvisToken),
       });
     }
+
+    const dropdownBtn = document.getElementById('mcp-dropdown-btn');
+    const dropdownMenu = document.getElementById('mcp-dropdown-menu');
+
+    dropdownBtn.addEventListener('click', () => dropdownMenu.classList.toggle('open'));
+
+    document.addEventListener('click', (e) => {
+      const isOutside = !document.getElementById('mcp-dropdown-wrapper').contains(e.target);
+      if (isOutside) dropdownMenu.classList.remove('open');
+    });
+
+    document.getElementById('mcp-search').addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      const filtered = allServers.filter((name) => name.toLowerCase().includes(query));
+      renderServerList(filtered);
+    });
+
+    document.getElementById('mcp-apply').addEventListener('click', () => {
+      const checked = Array.from(
+        document.querySelectorAll('#mcp-list input:checked')
+      ).map((el) => el.value);
+      if (checked.length > 0) jarvis.setMcpServers(checked);
+      dropdownMenu.classList.remove('open');
+    });
 
     function toggleChat() {
       chatOpen = !chatOpen;
@@ -239,17 +330,6 @@
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('google-sign-in-btn').addEventListener('click', startGoogleLogin);
     document.getElementById('chat-toggle').addEventListener('click', toggleChat);
-
-    // On return from OAuth redirect, the token is in sessionStorage
-    const storedToken = sessionStorage.getItem('google_id_token');
-    if (storedToken) {
-      sessionStorage.removeItem('google_id_token');
-      mountChat(storedToken);
-      document.getElementById('nav-login-btn').textContent = 'Signed In';
-      // Open the chat panel automatically
-      chatOpen = true;
-      document.getElementById('chat-panel').classList.add('open');
-    }
   </script>
 
 </body>

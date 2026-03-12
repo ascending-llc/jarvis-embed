@@ -10,6 +10,7 @@ app.get('/api/config', (req, res) => {
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     redirectUri: process.env.REDIRECT_URI,
     jarvisUrl: process.env.JARVIS_URL ?? 'https://jarvis-demo.ascendingdc.com',
+    jarvisModel: process.env.JARVIS_MODEL || undefined,
   });
 });
 

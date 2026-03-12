@@ -43,7 +43,9 @@ export class JarvisEmbed {
   private async start(): Promise<void> {
     let token: string;
     try {
-      token = await this.exchangeToken(this.config);
+      token = this.config.provider === 'direct'
+        ? this.config.token
+        : await this.exchangeToken(this.config);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       this.config.onError?.(error);
@@ -54,7 +56,9 @@ export class JarvisEmbed {
     const chatOrigin = new URL(this.apiUrl).origin;
 
     const iframe = document.createElement('iframe');
-    iframe.src = `${this.apiUrl}/v1/chat`;
+    const chatUrl = new URL(`${this.apiUrl}/v1/chat`);
+    if (this.config.model) chatUrl.searchParams.set('model', this.config.model);
+    iframe.src = chatUrl.toString();
     iframe.title = 'Jarvis AI Assistant';
     iframe.style.cssText = `width:${this.config.width ?? '100%'};height:${this.config.height ?? '600px'};border:none;display:block;`;
 

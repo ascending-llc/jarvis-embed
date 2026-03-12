@@ -21,6 +21,7 @@ const jarvis = new JarvisEmbed({
   provider:    'google',
   token:       googleIdToken,
   containerId: 'chat-container',
+  model:       'claude-opus-4-6',
   onReady:     (jarvisToken) => jarvis.setMcpServers(['my-mcp-server']),
 });
 ```
@@ -38,6 +39,7 @@ const jarvis = new JarvisEmbed({
 | `width` | `string` | `'100%'` | CSS width of the iframe. |
 | `height` | `string` | `'600px'` | CSS height of the iframe. |
 | `apiUrl` | `string` | `https://jarvis.ascendingdc.com` | Override for self-hosted deployments. |
+| `model` | `string` | — | Model to use for the conversation (e.g. `gpt-4o`, `claude-opus-4-6`). |
 | `debug` | `boolean` | `false` | Log SDK activity to the console. |
 | `onReady` | `(jarvisToken: string) => void` | — | Fires when the iframe is authenticated and ready. Receives the exchanged Jarvis token. |
 | `onError` | `(err: Error) => void` | — | Fires on failure. |
@@ -58,6 +60,18 @@ Calls `POST {apiUrl}/api/auth/exchange` with your auth payload and receives a Ja
 | `google` | Google `id_token` from OAuth2 |
 | `s_jwt` | JWT signed with a shared secret (HS256) |
 | `a_jwt` | JWT signed with a private key (RS256 / ES256) |
+
+### `direct`
+
+Pass a Jarvis session token you already hold — the SDK skips the `/api/auth/exchange` call entirely and uses the token as-is for `SDK_AUTH`.
+
+```ts
+new JarvisEmbed({
+  provider:    'direct',
+  token:       existingJarvisToken,
+  containerId: 'chat-container',
+});
+```
 
 ### `hmac`
 
@@ -83,11 +97,31 @@ Removes the iframe and cleans up the `window` message listener. Call this on unm
 
 ### `setMcpServers(servers: string[])`
 
-Configures the embedded chat with one or more [MCP](https://modelcontextprotocol.io) server URLs. If called before the iframe is ready, the servers are queued and sent automatically once the SDK is ready.
+Activates one or more [MCP](https://modelcontextprotocol.io) servers by name. If called before the iframe is ready, the servers are queued and sent automatically once the SDK is ready.
 
 ```ts
-jarvis.setMcpServers(['aws-knowledge']);
+jarvis.setMcpServers(['posthog', 'aws-knowledge']);
 ```
+
+---
+
+## React
+
+Use the `useJarvis` hook from `examples/react/src/useJarvis.ts` to manage the lifecycle automatically:
+
+```ts
+import { useJarvis } from './useJarvis';
+
+const jarvisRef = useJarvis({
+  provider:    'google',
+  token:       googleIdToken,
+  containerId: 'chat-container',
+  model:       'claude-opus-4-6',
+  onReady:     (jarvisToken) => jarvisRef.current?.setMcpServers(['posthog']),
+});
+```
+
+Pass `null` to defer initialization until the user is authenticated. The hook calls `destroy()` automatically on unmount, so there are no memory leaks or stale event listeners.
 
 ---
 
@@ -120,6 +154,7 @@ cp examples/react/.env.example   examples/react/.env
 | `GOOGLE_CLIENT_SECRET` | OAuth client secret (never sent to the browser) |
 | `REDIRECT_URI` | Must match what's registered in Google Cloud Console |
 | `JARVIS_URL` | `https://jarvis-demo.ascendingdc.com` or `http://localhost:3080` for local Jarvis |
+| `JARVIS_MODEL` | Optional model override (e.g. `gpt-4o`, `claude-opus-4-6`) |
 | `PORT` | Express port (default `5500`) |
 
 ### 3. Run an example

@@ -288,6 +288,7 @@
         provider: 'google',
         token,
         apiUrl: config.jarvisUrl,
+        ...(config.jarvisModel ? { model: config.jarvisModel } : {}),
         container: document.getElementById('chat-iframe-wrapper'),
         width: '100%',
         height: '100%',

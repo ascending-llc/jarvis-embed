@@ -10,6 +10,7 @@ export class JarvisEmbed {
   private messageHandler: ((e: MessageEvent) => void) | null = null;
   private sdkReady = false;
   private pendingMcpServers: string[] | null = null;
+  private destroyed = false;
 
   constructor(config: JarvisConfig) {
     this.config = config;
@@ -30,6 +31,7 @@ export class JarvisEmbed {
   }
 
   destroy(): void {
+    this.destroyed = true;
     if (this.messageHandler) {
       window.removeEventListener('message', this.messageHandler);
       this.messageHandler = null;
@@ -52,7 +54,10 @@ export class JarvisEmbed {
       return;
     }
 
+    if (this.destroyed) return;
+
     const container = this.resolveContainer();
+    if (!container) return;
     const chatOrigin = new URL(this.apiUrl).origin;
 
     const iframe = document.createElement('iframe');
@@ -92,12 +97,14 @@ export class JarvisEmbed {
     this.iframe = iframe;
   }
 
-  private resolveContainer(): HTMLElement {
+  private resolveContainer(): HTMLElement | null {
     if (this.config.container) return this.config.container;
 
     if (this.config.containerId) {
       const el = document.getElementById(this.config.containerId);
       if (el) return el;
+      this.config.onError?.(new Error(`Container element with id "${this.config.containerId}" not found`));
+      return null;
     }
 
     return document.body;
@@ -110,11 +117,20 @@ export class JarvisEmbed {
       ? { provider: 'hmac', userId: auth.userId, timestamp: auth.timestamp, signature: auth.signature }
       : { provider: auth.provider, token: auth.token };
 
-    const res = await fetch(`${this.apiUrl}/api/auth/exchange`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15_000);
+
+    let res: Response;
+    try {
+      res = await fetch(`${this.apiUrl}/api/auth/exchange`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!res.ok) throw new Error(`Token exchange failed (HTTP ${res.status})`);
 

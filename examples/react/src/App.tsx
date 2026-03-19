@@ -5,7 +5,7 @@ type AppConfig = {
   googleClientId: string;
   redirectUri: string;
   jarvisUrl: string;
-  jarvisSpec?: string;
+  jarvisModel?: string;
 };
 
 type McpServer = {
@@ -38,7 +38,7 @@ export default function App() {
       provider: 'google' as const,
       token: googleToken,
       apiUrl: appConfig.jarvisUrl,
-      ...(appConfig.jarvisSpec ? { spec: appConfig.jarvisSpec } : {}),
+      ...(appConfig.jarvisModel ? { model: appConfig.jarvisModel } : {}),
       container,
       width: '100%',
       height: '100%',

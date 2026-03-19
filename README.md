@@ -21,7 +21,7 @@ const jarvis = new JarvisEmbed({
   provider:    'google',
   token:       googleIdToken,
   containerId: 'chat-container',
-  spec:        'my-spec',
+  model:       'my-spec',
   onReady:     (jarvisToken) => jarvis.setMcpServers(['my-mcp-server']),
 });
 ```
@@ -39,7 +39,7 @@ const jarvis = new JarvisEmbed({
 | `width` | `string` | `'100%'` | CSS width of the iframe. |
 | `height` | `string` | `'600px'` | CSS height of the iframe. |
 | `apiUrl` | `string` | `https://jarvis.ascendingdc.com` | Override for self-hosted deployments. |
-| `spec` | `string` | — | Spec identifier to use for the conversation. |
+| `model` | `string` | — | Spec identifier to use for the conversation (sent as `?spec=` to the API). Retrieve available values from `GET {apiUrl}/api/config`. |
 | `debug` | `boolean` | `false` | Log SDK activity to the console. |
 | `onReady` | `(jarvisToken: string) => void` | — | Fires when the iframe is authenticated and ready. Receives the exchanged Jarvis token. |
 | `onError` | `(err: Error) => void` | — | Fires on failure. |
@@ -124,7 +124,7 @@ const jarvisRef = useJarvis({
   provider:    'google',
   token:       googleIdToken,
   containerId: 'chat-container',
-  spec:        'my-spec',
+  model:       'my-spec',
   onReady:     (jarvisToken) => jarvisRef.current?.setMcpServers(['posthog']),
 });
 ```
@@ -162,7 +162,7 @@ cp examples/react/.env.example   examples/react/.env
 | `GOOGLE_CLIENT_SECRET` | OAuth client secret (never sent to the browser) |
 | `REDIRECT_URI` | Must match what's registered in Google Cloud Console |
 | `JARVIS_URL` | `https://jarvis-demo.ascendingdc.com` or `http://localhost:3080` for local Jarvis |
-| `JARVIS_SPEC` | Optional spec override |
+| `JARVIS_MODEL` | Optional spec override |
 | `PORT` | Express port (default `5500`) |
 
 ### 3. Run an example

@@ -23,7 +23,7 @@ type BaseConfig = {
     width?: string;
     height?: string;
     apiUrl?: string;
-    model?: string;
+    spec?: string;
     debug?: boolean;
     onReady?: (jarvisToken: string) => void;
     onError?: (error: Error) => void;

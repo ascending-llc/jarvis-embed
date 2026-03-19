@@ -49,7 +49,7 @@ var JarvisEmbed = class {
     const chatOrigin = new URL(this.apiUrl).origin;
     const iframe = document.createElement("iframe");
     const chatUrl = new URL(`${this.apiUrl}/v1/chat`);
-    if (this.config.model) chatUrl.searchParams.set("model", this.config.model);
+    if (this.config.spec) chatUrl.searchParams.set("spec", this.config.spec);
     iframe.src = chatUrl.toString();
     iframe.title = "Jarvis AI Assistant";
     iframe.style.cssText = `width:${(_c = this.config.width) != null ? _c : "100%"};height:${(_d = this.config.height) != null ? _d : "600px"};border:none;display:block;`;

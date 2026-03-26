@@ -1,0 +1,94 @@
+name: Bump version, publish to npm and CDN
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      dry_run:
+        description: 'Dry run mode'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  bump-version-and-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.tag.outputs.new_tag }}
+      new_version: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get current version from latest tag
+        id: get_version
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          CURRENT_VERSION=${LATEST_TAG#v}
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+          echo "Latest tag: $LATEST_TAG"
+
+      - name: Bump version tag
+        id: tag
+        uses: anothrNick/github-tag-action@master
+        env:
+          VERBOSE: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_API_TAGGING: false
+          TAG_PREFIX: 'v'
+          DRY_RUN: ${{ inputs.dry_run }}
+          DEFAULT_BUMP: ${{ inputs.version_type }}
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: bump-version-and-tag
+    if: ${{ !inputs.dry_run }}
+    steps:
+      - name: Checkout at new tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.bump-version-and-tag.outputs.new_tag }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          registry-url: https://registry.npmjs.org
+
+      - name: Set package version from tag
+        run: npm version "${{ needs.bump-version-and-tag.outputs.new_version }}" --no-git-tag-version
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.CDN_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Upload to S3 (versioned)
+        run: aws s3 cp dist/index.global.js "s3://jarvis-sandpack/embed-sdk/${{ needs.bump-version-and-tag.outputs.new_tag }}/jarvis-embed.js" --content-type "application/javascript"
+
+      - name: Upload to S3 (latest)
+        run: aws s3 cp dist/index.global.js "s3://jarvis-sandpack/embed-sdk/latest/jarvis-embed.js" --content-type "application/javascript"

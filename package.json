@@ -5,6 +5,12 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -13,7 +19,6 @@
     }
   },
   "scripts": {
-    "prepare": "npm run build",
     "build": "tsup",
     "dev": "tsup --watch",
     "type-check": "tsc --noEmit",

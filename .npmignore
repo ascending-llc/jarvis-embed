@@ -1,0 +1,9 @@
+examples/
+docs/
+src/
+.github/
+tsconfig.json
+tsup.config.ts
+typedoc.json
+.gitignore
+.env

@@ -90,8 +90,17 @@ jobs:
           role-to-assume: ${{ secrets.CDN_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
 
+      - name: Extract version without prefix
+        id: version
+        run: |
+          VERSION="${{ needs.bump-version-and-tag.outputs.new_version }}"
+          echo "clean=${VERSION#v}" >> "$GITHUB_OUTPUT"
+
       - name: Upload to S3 (versioned)
-        run: aws s3 cp dist/index.global.js "s3://jarvis-sandpack/embed-sdk/${{ needs.bump-version-and-tag.outputs.new_tag }}/jarvis-embed.js" --content-type "application/javascript"
+        run: aws s3 cp dist/index.global.js "s3://jarvis-sandpack/embed-sdk/${{ steps.version.outputs.clean }}/jarvis-embed.js" --content-type "application/javascript"
 
       - name: Upload to S3 (latest)
         run: aws s3 cp dist/index.global.js "s3://jarvis-sandpack/embed-sdk/latest/jarvis-embed.js" --content-type "application/javascript"
+
+      - name: Upload landing page
+        run: aws s3 cp landing/index.html "s3://jarvis-sandpack/embed-sdk/index.html" --content-type "text/html"

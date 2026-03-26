@@ -7,7 +7,24 @@ Embed the Jarvis AI Assistant in any web application.
 ## Installation
 
 ```bash
-npm install git@github.com:ascending-llc/jarvis-embed.git
+npm install @ascending-inc/jarvis-embed
+```
+
+### Browser (no bundler)
+
+A pre-built UMD bundle is included in the package at `dist/index.global.js`. Load it with a `<script>` tag and access the class via `window.JarvisSDK`:
+
+```html
+<script src="node_modules/@ascending-inc/jarvis-embed/dist/index.global.js"></script>
+<script>
+  const { JarvisEmbed } = window.JarvisSDK;
+
+  const jarvis = new JarvisEmbed({
+    provider:    'google',
+    token:       googleIdToken,
+    containerId: 'chat-container',
+  });
+</script>
 ```
 
 ---
@@ -15,7 +32,7 @@ npm install git@github.com:ascending-llc/jarvis-embed.git
 ## Usage
 
 ```ts
-import { JarvisEmbed } from 'jarvis-embed';
+import { JarvisEmbed } from '@ascending-inc/jarvis-embed';
 
 const jarvis = new JarvisEmbed({
   provider:    'google',
@@ -41,7 +58,7 @@ const jarvis = new JarvisEmbed({
 | `apiUrl` | `string` | `https://jarvis.ascendingdc.com` | Override for self-hosted deployments. |
 | `model` | `string` | — | Spec identifier to use for the conversation (sent as `?spec=` to the API). Retrieve available values from `GET {apiUrl}/api/config`. |
 | `debug` | `boolean` | `false` | Log SDK activity to the console. |
-| `onReady` | `(jarvisToken: string) => void` | — | Fires when the iframe is authenticated and ready. Receives the exchanged Jarvis token. |
+| `onReady` | `(jarvisToken: string) => void` | — | Fires when the iframe is authenticated and ready. Receives the Jarvis session token — use it to call Jarvis APIs (e.g. `GET {apiUrl}/api/mcp/servers`) on behalf of the user. |
 | `onError` | `(err: Error) => void` | — | Fires on failure. |
 | `onMessage` | `(data: unknown) => void` | — | Fires when the iframe posts a message to the host page. |
 
@@ -99,37 +116,136 @@ Requests older than 5 minutes are rejected server-side.
 
 ## Methods
 
-### `destroy()`
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `destroy` | `() => void` | Removes the iframe and cleans up the `window` message listener. Call this on unmount — essential for React. |
+| `setMcpServers` | `(servers: string[]) => void` | Activates one or more [MCP](https://modelcontextprotocol.io) servers by name. Safe to call before the iframe is ready — servers are queued and flushed automatically on `SDK_READY`. |
 
-Removes the iframe and cleans up the `window` message listener. Call this on unmount — essential for React.
+---
 
-### `setMcpServers(servers: string[])`
+## MCP (Model Context Protocol)
 
-Activates one or more [MCP](https://modelcontextprotocol.io) servers by name. If called before the iframe is ready, the servers are queued and sent automatically once the SDK is ready.
+Pass one or more MCP server names to give Jarvis access to external tools and data sources during a session.
+
+### Discovering available servers
+
+Call `GET {apiUrl}/api/mcp/servers` with the Jarvis token as a Bearer header to retrieve the names of all servers available to the authenticated user. The response is an object keyed by server name:
 
 ```ts
-jarvis.setMcpServers(['posthog', 'aws-knowledge']);
+const jarvis = new JarvisEmbed({
+  provider:    'google',
+  token:       googleIdToken,
+  containerId: 'chat-container',
+  onReady: async (jarvisToken) => {
+    const res = await fetch(`https://jarvis.ascendingdc.com/api/mcp/servers`, {
+      headers: { Authorization: `Bearer ${jarvisToken}` },
+    });
+    const servers = await res.json(); // { "posthog": {...}, "github": {...}, ... }
+    const names = Object.keys(servers);
+
+    // Activate all of them, or let the user pick from `names`
+    jarvis.setMcpServers(names);
+  },
+});
+```
+
+### Activating servers
+
+The safest place to call `setMcpServers` is inside `onReady`, which fires once the iframe has authenticated and is listening:
+
+```ts
+const jarvis = new JarvisEmbed({
+  provider:    'google',
+  token:       googleIdToken,
+  containerId: 'chat-container',
+  onReady: () => {
+    jarvis.setMcpServers(['posthog', 'aws-knowledge']);
+  },
+});
+```
+
+You can also call it at any time after instantiation — if the iframe isn't ready yet the servers are queued internally and sent as soon as `SDK_READY` fires:
+
+```ts
+const jarvis = new JarvisEmbed({
+  provider:    's_jwt',
+  token:       myJwt,
+  containerId: 'chat-container',
+});
+
+// Called immediately — queued until SDK_READY
+jarvis.setMcpServers(['github', 'jira']);
+```
+
+To swap the active server set later (e.g. after a user action), call `setMcpServers` again with the new list:
+
+```ts
+document.getElementById('enable-analytics')?.addEventListener('click', () => {
+  jarvis.setMcpServers(['posthog']);
+});
 ```
 
 ---
 
 ## React
 
-Use the `useJarvis` hook from `examples/react/src/useJarvis.ts` to manage the lifecycle automatically:
+`useJarvis` is not exported from the package — copy `examples/react/src/useJarvis.ts` into your project. It wraps `JarvisEmbed` in a `useEffect` and calls `destroy()` on unmount automatically:
 
 ```ts
-import { useJarvis } from './useJarvis';
+import { useEffect, useRef } from 'react';
+import { JarvisEmbed } from '@ascending-inc/jarvis-embed';
+import type { JarvisConfig } from '@ascending-inc/jarvis-embed';
 
-const jarvisRef = useJarvis({
-  provider:    'google',
-  token:       googleIdToken,
-  containerId: 'chat-container',
-  model:       'my-spec',
-  onReady:     (jarvisToken) => jarvisRef.current?.setMcpServers(['posthog']),
-});
+export function useJarvis(config: JarvisConfig | null) {
+  const jarvisRef = useRef<JarvisEmbed | null>(null);
+
+  useEffect(() => {
+    if (!config) return;
+    jarvisRef.current = new JarvisEmbed(config);
+    return () => {
+      jarvisRef.current?.destroy();
+      jarvisRef.current = null;
+    };
+  }, [config]);
+
+  return jarvisRef;
+}
 ```
 
 Pass `null` to defer initialization until the user is authenticated. The hook calls `destroy()` automatically on unmount, so there are no memory leaks or stale event listeners.
+
+### Using the `container` prop in React
+
+When mounting into a React-managed DOM node, use a **callback ref** so initialization only happens once the element actually exists. Wrap config in `useMemo` with the container as a dependency — this ensures the SDK sees a real `HTMLElement`, not `null`:
+
+```tsx
+import { useCallback, useMemo, useState } from 'react';
+import { useJarvis } from './useJarvis';
+
+function ChatWidget({ googleToken }: { googleToken: string }) {
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+
+  const config = useMemo(() => {
+    if (!container || !googleToken) return null;
+    return {
+      provider: 'google' as const,
+      token:    googleToken,
+      container,
+      width:    '100%',
+      height:   '100%',
+      onReady:  (jarvisToken: string) => {
+        // fetch available servers and activate them
+      },
+    };
+  }, [container, googleToken]);
+
+  const jarvisRef = useJarvis(config);
+
+  return <div ref={setContainer} style={{ flex: 1 }} />;
+}
+```
+
+Using `containerId` instead avoids this entirely — the SDK does the `getElementById` lookup itself after the iframe loads — but the `container` prop approach above is required when the element is managed by React state.
 
 ---
 
@@ -140,7 +256,7 @@ Both examples demonstrate Google OAuth, MCP tool selection, and embedding the ch
 ### 1. Clone and set up
 
 ```bash
-git clone git@github.com:ascending-llc/jarvis-embed.git
+git clone https://github.com/ascending-llc/jarvis-embed.git
 cd jarvis-embed
 npm run setup
 ```

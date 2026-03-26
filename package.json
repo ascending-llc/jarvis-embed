@@ -1,5 +1,5 @@
 {
-  "name": "jarvis-embed",
+  "name": "@ascending-inc/jarvis-embed",
   "version": "0.1.0",
   "description": "Official SDK for embedding the Jarvis AI Assistant in any web application",
   "main": "./dist/index.js",

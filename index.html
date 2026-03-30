@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jarvis Embed SDK</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-dark.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0d11;
+      --surface: #151820;
+      --surface-hover: #1c1f2b;
+      --border: #262a38;
+      --text: #e2e5ef;
+      --text-muted: #7c829a;
+      --accent: #6366f1;
+      --green: #34d399;
+      --mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+      --nav-height: 60px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11, 13, 17, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      height: var(--nav-height);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .nav-left { display: flex; align-items: center; gap: 12px; }
+    .nav-left a { display: flex; align-items: center; text-decoration: none; opacity: 0.85; transition: opacity 0.15s; }
+    .nav-left a:hover { opacity: 1; }
+    .nav-logo { height: 48px; width: auto; }
+    .nav-title-link { font-size: 1rem; font-weight: 600; color: var(--text); opacity: 0.85; transition: opacity 0.15s; }
+    .nav-title-link:hover { opacity: 1; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-icon { display: flex; align-items: center; opacity: 0.6; transition: opacity 0.15s; }
+    .nav-icon:hover { opacity: 1; }
+    .nav-icon img { height: 36px; width: auto; }
+
+    .install-section {
+      max-width: 800px;
+      margin: 40px auto 0;
+      padding: 0 24px;
+    }
+
+    .install-grid { display: grid; gap: 12px; }
+
+    .install-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .install-card .label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .copy-row { display: flex; align-items: center; gap: 8px; }
+
+    .copy-row code {
+      flex: 1;
+      background: #0f1218;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--text);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .copy-btn {
+      flex-shrink: 0;
+      background: var(--surface-hover);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+    }
+
+    .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+    .copy-btn svg { width: 16px; height: 16px; }
+
+    .markdown-body {
+      max-width: 800px;
+      margin: 40px auto 64px;
+      padding: 0 24px;
+      background: transparent !important;
+      color: var(--text) !important;
+    }
+
+    /* Override github-markdown-css to match our dark theme */
+    .markdown-body pre { background: #0f1218 !important; border: 1px solid var(--border) !important; border-radius: 8px; }
+    .markdown-body code:not(pre code) { background: rgba(99, 102, 241, 0.12) !important; color: #c3b8f0 !important; padding: 2px 6px; border-radius: 4px; }
+    .markdown-body table { border-collapse: collapse; display: table; width: 100%; }
+    .markdown-body th, .markdown-body td { border: 1px solid var(--border) !important; }
+    .markdown-body hr { border-color: var(--border) !important; }
+    .markdown-body a { color: var(--accent) !important; }
+    .markdown-body blockquote { border-left-color: var(--border) !important; }
+    .markdown-body h1:first-child { margin-top: 0; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-left">
+      <a href="https://ascendingdc.com/jarvis-ai/jarvis-chat/">
+        <img class="nav-logo" src="assets/jarvis-logo.png" alt="Jarvis">
+      </a>
+      <a href="https://ascendingdc.com/jarvis-ai/jarvis-chat/" class="nav-title-link">Jarvis Embed SDK</a>
+    </div>
+    <div class="nav-right">
+      <a class="nav-icon" href="https://www.npmjs.com/package/@ascending-inc/jarvis-embed" title="npm">
+        <img src="assets/npm-icon.png" alt="npm">
+      </a>
+      <a class="nav-icon" href="https://github.com/ascending-llc/jarvis-embed" title="GitHub">
+        <img src="assets/github-icon.png" alt="GitHub">
+      </a>
+    </div>
+  </nav>
+
+  <div class="install-section">
+    <div class="install-grid">
+      <div class="install-card">
+        <div class="label">Script Tag (CDN)</div>
+        <div class="copy-row">
+          <code id="cdn-url">&lt;script src="https://ascending-llc.github.io/jarvis-embed/latest/jarvis-embed.js"&gt;&lt;/script&gt;</code>
+          <button class="copy-btn" data-copy-id="cdn-url">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+          </button>
+        </div>
+      </div>
+      <div class="install-card">
+        <div class="label">npm</div>
+        <div class="copy-row">
+          <code id="npm-install">npm install @ascending-inc/jarvis-embed</code>
+          <button class="copy-btn" data-copy-id="npm-install">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="markdown-body">
+    <h1>Jarvis Embed SDK</h1>
+<p>Embed the Jarvis AI Assistant in any web application.</p>
+<hr>
+<h2>Installation</h2>
+<pre><code class="language-bash">npm install @ascending-inc/jarvis-embed
+</code></pre>
+<h3>Browser (no bundler)</h3>
+<p>A pre-built UMD bundle is included in the package at <code>dist/index.global.js</code>. Load it with a <code>&lt;script&gt;</code> tag and access the class via <code>window.JarvisSDK</code>:</p>
+<pre><code class="language-html">&lt;script src=&quot;node_modules/@ascending-inc/jarvis-embed/dist/index.global.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+  const { JarvisEmbed } = window.JarvisSDK;
+
+  const jarvis = new JarvisEmbed({
+    provider:    &#39;google&#39;,
+    token:       googleIdToken,
+    containerId: &#39;chat-container&#39;,
+  });
+&lt;/script&gt;
+</code></pre>
+<hr>
+<h2>Usage</h2>
+<pre><code class="language-ts">import { JarvisEmbed } from &#39;@ascending-inc/jarvis-embed&#39;;
+
+const jarvis = new JarvisEmbed({
+  provider:    &#39;google&#39;,
+  token:       googleIdToken,
+  containerId: &#39;chat-container&#39;,
+  model:       &#39;my-spec&#39;,
+  onReady:     (jarvisToken) =&gt; jarvis.setMcpServers([&#39;my-mcp-server&#39;]),
+});
+</code></pre>
+<hr>
+<h2>Options</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>provider</code></td>
+<td><code>AuthProvider</code></td>
+<td>required</td>
+<td>Auth provider — see <a href="#authentication">Authentication</a>.</td>
+</tr>
+<tr>
+<td><code>token</code></td>
+<td><code>string</code></td>
+<td>required*</td>
+<td>OAuth / JWT token. *Not used for <code>hmac</code>.</td>
+</tr>
+<tr>
+<td><code>containerId</code></td>
+<td><code>string</code></td>
+<td>—</td>
+<td>ID of the DOM element to mount the iframe into.</td>
+</tr>
+<tr>
+<td><code>container</code></td>
+<td><code>HTMLElement</code></td>
+<td>—</td>
+<td>Direct element reference (alternative to <code>containerId</code>).</td>
+</tr>
+<tr>
+<td><code>width</code></td>
+<td><code>string</code></td>
+<td><code>&#39;100%&#39;</code></td>
+<td>CSS width of the iframe.</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td><code>string</code></td>
+<td><code>&#39;600px&#39;</code></td>
+<td>CSS height of the iframe.</td>
+</tr>
+<tr>
+<td><code>apiUrl</code></td>
+<td><code>string</code></td>
+<td><code>https://jarvis.ascendingdc.com</code></td>
+<td>Override for self-hosted deployments.</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td><code>string</code></td>
+<td>—</td>
+<td>Spec identifier to use for the conversation (sent as <code>?spec=</code> to the API). Retrieve available values from <code>GET {apiUrl}/api/config</code>.</td>
+</tr>
+<tr>
+<td><code>debug</code></td>
+<td><code>boolean</code></td>
+<td><code>false</code></td>
+<td>Log SDK activity to the console.</td>
+</tr>
+<tr>
+<td><code>onReady</code></td>
+<td><code>(jarvisToken: string) =&gt; void</code></td>
+<td>—</td>
+<td>Fires when the iframe is authenticated and ready. Receives the Jarvis session token — use it to call Jarvis APIs (e.g. <code>GET {apiUrl}/api/mcp/servers</code>) on behalf of the user.</td>
+</tr>
+<tr>
+<td><code>onError</code></td>
+<td><code>(err: Error) =&gt; void</code></td>
+<td>—</td>
+<td>Fires on failure.</td>
+</tr>
+<tr>
+<td><code>onMessage</code></td>
+<td><code>(data: unknown) =&gt; void</code></td>
+<td>—</td>
+<td>Fires when the iframe posts a message to the host page.</td>
+</tr>
+</tbody></table>
+<p>If neither <code>containerId</code> nor <code>container</code> is provided the iframe appends to <code>document.body</code>.</p>
+<h3>Getting a spec</h3>
+<p>Available specs can be retrieved from the Jarvis config endpoint:</p>
+<pre><code>GET https://jarvis-demo.ascendingdc.com/api/config
+</code></pre>
+<hr>
+<h2>Authentication</h2>
+<p>Calls <code>POST {apiUrl}/api/auth/exchange</code> with your auth payload and receives a Jarvis session token back.</p>
+<h3><code>google</code> / <code>s_jwt</code> / <code>a_jwt</code></h3>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Token</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>google</code></td>
+<td>Google <code>id_token</code> from OAuth2</td>
+</tr>
+<tr>
+<td><code>s_jwt</code></td>
+<td>JWT signed with a shared secret (HS256)</td>
+</tr>
+<tr>
+<td><code>a_jwt</code></td>
+<td>JWT signed with a private key (RS256 / ES256)</td>
+</tr>
+</tbody></table>
+<h3><code>direct</code></h3>
+<p>Pass a Jarvis session token you already hold — the SDK skips the <code>/api/auth/exchange</code> call entirely and uses the token as-is for <code>SDK_AUTH</code>.</p>
+<pre><code class="language-ts">new JarvisEmbed({
+  provider:    &#39;direct&#39;,
+  token:       existingJarvisToken,
+  containerId: &#39;chat-container&#39;,
+});
+</code></pre>
+<h3><code>hmac</code></h3>
+<pre><code class="language-ts">new JarvisEmbed({
+  provider:  &#39;hmac&#39;,
+  userId:    &#39;user_123&#39;,
+  timestamp: Math.floor(Date.now() / 1000),
+  signature: hmacHex, // HMAC-SHA256(userId + timestamp)
+  containerId: &#39;chat-container&#39;,
+});
+</code></pre>
+<p>Requests older than 5 minutes are rejected server-side.</p>
+<hr>
+<h2>Methods</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Signature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>destroy</code></td>
+<td><code>() =&gt; void</code></td>
+<td>Removes the iframe and cleans up the <code>window</code> message listener. Call this on unmount — essential for React.</td>
+</tr>
+<tr>
+<td><code>setMcpServers</code></td>
+<td><code>(servers: string[]) =&gt; void</code></td>
+<td>Activates one or more <a href="https://modelcontextprotocol.io">MCP</a> servers by name. Safe to call before the iframe is ready — servers are queued and flushed automatically on <code>SDK_READY</code>.</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>MCP (Model Context Protocol)</h2>
+<p>Pass one or more MCP server names to give Jarvis access to external tools and data sources during a session.</p>
+<h3>Discovering available servers</h3>
+<p>Call <code>GET {apiUrl}/api/mcp/servers</code> with the Jarvis token as a Bearer header to retrieve the names of all servers available to the authenticated user. The response is an object keyed by server name:</p>
+<pre><code class="language-ts">const jarvis = new JarvisEmbed({
+  provider:    &#39;google&#39;,
+  token:       googleIdToken,
+  containerId: &#39;chat-container&#39;,
+  onReady: async (jarvisToken) =&gt; {
+    const res = await fetch(`https://jarvis.ascendingdc.com/api/mcp/servers`, {
+      headers: { Authorization: `Bearer ${jarvisToken}` },
+    });
+    const servers = await res.json(); // { &quot;posthog&quot;: {...}, &quot;github&quot;: {...}, ... }
+    const names = Object.keys(servers);
+
+    // Activate all of them, or let the user pick from `names`
+    jarvis.setMcpServers(names);
+  },
+});
+</code></pre>
+<h3>Activating servers</h3>
+<p>The safest place to call <code>setMcpServers</code> is inside <code>onReady</code>, which fires once the iframe has authenticated and is listening:</p>
+<pre><code class="language-ts">const jarvis = new JarvisEmbed({
+  provider:    &#39;google&#39;,
+  token:       googleIdToken,
+  containerId: &#39;chat-container&#39;,
+  onReady: () =&gt; {
+    jarvis.setMcpServers([&#39;posthog&#39;, &#39;aws-knowledge&#39;]);
+  },
+});
+</code></pre>
+<p>You can also call it at any time after instantiation — if the iframe isn&#39;t ready yet the servers are queued internally and sent as soon as <code>SDK_READY</code> fires:</p>
+<pre><code class="language-ts">const jarvis = new JarvisEmbed({
+  provider:    &#39;s_jwt&#39;,
+  token:       myJwt,
+  containerId: &#39;chat-container&#39;,
+});
+
+// Called immediately — queued until SDK_READY
+jarvis.setMcpServers([&#39;github&#39;, &#39;jira&#39;]);
+</code></pre>
+<p>To swap the active server set later (e.g. after a user action), call <code>setMcpServers</code> again with the new list:</p>
+<pre><code class="language-ts">document.getElementById(&#39;enable-analytics&#39;)?.addEventListener(&#39;click&#39;, () =&gt; {
+  jarvis.setMcpServers([&#39;posthog&#39;]);
+});
+</code></pre>
+<hr>
+<h2>React</h2>
+<p><code>useJarvis</code> is not exported from the package — copy <code>examples/react/src/useJarvis.ts</code> into your project. It wraps <code>JarvisEmbed</code> in a <code>useEffect</code> and calls <code>destroy()</code> on unmount automatically:</p>
+<pre><code class="language-ts">import { useEffect, useRef } from &#39;react&#39;;
+import { JarvisEmbed } from &#39;@ascending-inc/jarvis-embed&#39;;
+import type { JarvisConfig } from &#39;@ascending-inc/jarvis-embed&#39;;
+
+export function useJarvis(config: JarvisConfig | null) {
+  const jarvisRef = useRef&lt;JarvisEmbed | null&gt;(null);
+
+  useEffect(() =&gt; {
+    if (!config) return;
+    jarvisRef.current = new JarvisEmbed(config);
+    return () =&gt; {
+      jarvisRef.current?.destroy();
+      jarvisRef.current = null;
+    };
+  }, [config]);
+
+  return jarvisRef;
+}
+</code></pre>
+<p>Pass <code>null</code> to defer initialization until the user is authenticated. The hook calls <code>destroy()</code> automatically on unmount, so there are no memory leaks or stale event listeners.</p>
+<h3>Using the <code>container</code> prop in React</h3>
+<p>When mounting into a React-managed DOM node, use a <strong>callback ref</strong> so initialization only happens once the element actually exists. Wrap config in <code>useMemo</code> with the container as a dependency — this ensures the SDK sees a real <code>HTMLElement</code>, not <code>null</code>:</p>
+<pre><code class="language-tsx">import { useCallback, useMemo, useState } from &#39;react&#39;;
+import { useJarvis } from &#39;./useJarvis&#39;;
+
+function ChatWidget({ googleToken }: { googleToken: string }) {
+  const [container, setContainer] = useState&lt;HTMLDivElement | null&gt;(null);
+
+  const config = useMemo(() =&gt; {
+    if (!container || !googleToken) return null;
+    return {
+      provider: &#39;google&#39; as const,
+      token:    googleToken,
+      container,
+      width:    &#39;100%&#39;,
+      height:   &#39;100%&#39;,
+      onReady:  (jarvisToken: string) =&gt; {
+        // fetch available servers and activate them
+      },
+    };
+  }, [container, googleToken]);
+
+  const jarvisRef = useJarvis(config);
+
+  return &lt;div ref={setContainer} style={{ flex: 1 }} /&gt;;
+}
+</code></pre>
+<p>Using <code>containerId</code> instead avoids this entirely — the SDK does the <code>getElementById</code> lookup itself after the iframe loads — but the <code>container</code> prop approach above is required when the element is managed by React state.</p>
+<hr>
+<h2>Examples</h2>
+<p>Both examples demonstrate Google OAuth, MCP tool selection, and embedding the chat widget. They share the same Express backend for token exchange.</p>
+<h3>1. Clone and set up</h3>
+<pre><code class="language-bash">git clone https://github.com/ascending-llc/jarvis-embed.git
+cd jarvis-embed
+npm run setup
+</code></pre>
+<p><code>setup</code> installs root dependencies, builds the SDK, and installs dependencies for both examples.</p>
+<h3>2. Configure environment variables</h3>
+<p>Each example has its own <code>.env</code>. Copy and fill in both:</p>
+<pre><code class="language-bash">cp examples/vanilla/.env.example examples/vanilla/.env
+cp examples/react/.env.example   examples/react/.env
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GOOGLE_CLIENT_ID</code></td>
+<td>OAuth client ID from <a href="https://console.cloud.google.com/apis/credentials">Google Cloud Console</a></td>
+</tr>
+<tr>
+<td><code>GOOGLE_CLIENT_SECRET</code></td>
+<td>OAuth client secret (never sent to the browser)</td>
+</tr>
+<tr>
+<td><code>REDIRECT_URI</code></td>
+<td>Must match what&#39;s registered in Google Cloud Console</td>
+</tr>
+<tr>
+<td><code>JARVIS_URL</code></td>
+<td><code>https://jarvis-demo.ascendingdc.com</code> or <code>http://localhost:3080</code> for local Jarvis</td>
+</tr>
+<tr>
+<td><code>JARVIS_MODEL</code></td>
+<td>Optional spec override</td>
+</tr>
+<tr>
+<td><code>PORT</code></td>
+<td>Express port (default <code>5500</code>)</td>
+</tr>
+</tbody></table>
+<h3>3. Run an example</h3>
+<p><strong>Vanilla JS</strong> — floating chat widget, served at <code>http://localhost:5500</code></p>
+<pre><code class="language-bash">npm run example:vanilla
+</code></pre>
+<p><strong>React</strong> — <code>useJarvis</code> hook demo with proper cleanup, served at <code>http://localhost:5501</code></p>
+<pre><code class="language-bash">npm run example:react
+</code></pre>
+
+
+  </div>
+
+  <script>
+    const COPY_ICON = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>';
+    const CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>';
+
+    document.querySelectorAll('.copy-btn[data-copy-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const source = document.getElementById(btn.dataset.copyId);
+        const text = source.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          btn.classList.add('copied');
+          btn.innerHTML = CHECK_ICON;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = COPY_ICON;
+          }, 2000);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

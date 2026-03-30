@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jarvis Embed SDK</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown-dark.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0d11;
+      --surface: #151820;
+      --surface-hover: #1c1f2b;
+      --border: #262a38;
+      --text: #e2e5ef;
+      --text-muted: #7c829a;
+      --accent: #6366f1;
+      --green: #34d399;
+      --mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+      --nav-height: 60px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11, 13, 17, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      height: var(--nav-height);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .nav-left { display: flex; align-items: center; gap: 12px; }
+    .nav-left a { display: flex; align-items: center; text-decoration: none; opacity: 0.85; transition: opacity 0.15s; }
+    .nav-left a:hover { opacity: 1; }
+    .nav-logo { height: 48px; width: auto; }
+    .nav-title-link { font-size: 1rem; font-weight: 600; color: var(--text); opacity: 0.85; transition: opacity 0.15s; }
+    .nav-title-link:hover { opacity: 1; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-icon { display: flex; align-items: center; opacity: 0.6; transition: opacity 0.15s; }
+    .nav-icon:hover { opacity: 1; }
+    .nav-icon img { height: 36px; width: auto; }
+
+    .install-section {
+      max-width: 800px;
+      margin: 40px auto 0;
+      padding: 0 24px;
+    }
+
+    .install-grid { display: grid; gap: 12px; }
+
+    .install-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .install-card .label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .copy-row { display: flex; align-items: center; gap: 8px; }
+
+    .copy-row code {
+      flex: 1;
+      background: #0f1218;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--text);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .copy-btn {
+      flex-shrink: 0;
+      background: var(--surface-hover);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+    }
+
+    .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+    .copy-btn svg { width: 16px; height: 16px; }
+
+    .markdown-body {
+      max-width: 800px;
+      margin: 40px auto 64px;
+      padding: 0 24px;
+      background: transparent !important;
+      color: var(--text) !important;
+    }
+
+    /* Override github-markdown-css to match our dark theme */
+    .markdown-body pre { background: #0f1218 !important; border: 1px solid var(--border) !important; border-radius: 8px; }
+    .markdown-body code:not(pre code) { background: rgba(99, 102, 241, 0.12) !important; color: #c3b8f0 !important; padding: 2px 6px; border-radius: 4px; }
+    .markdown-body table { border-collapse: collapse; display: table; width: 100%; }
+    .markdown-body th, .markdown-body td { border: 1px solid var(--border) !important; }
+    .markdown-body hr { border-color: var(--border) !important; }
+    .markdown-body a { color: var(--accent) !important; }
+    .markdown-body blockquote { border-left-color: var(--border) !important; }
+    .markdown-body h1:first-child { margin-top: 0; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-left">
+      <a href="https://ascendingdc.com/jarvis-ai/jarvis-chat/">
+        <img class="nav-logo" src="assets/jarvis-logo.png" alt="Jarvis">
+      </a>
+      <a href="https://ascendingdc.com/jarvis-ai/jarvis-chat/" class="nav-title-link">Jarvis Embed SDK</a>
+    </div>
+    <div class="nav-right">
+      <a class="nav-icon" href="https://www.npmjs.com/package/@ascending-inc/jarvis-embed" title="npm">
+        <img src="assets/npm-icon.png" alt="npm">
+      </a>
+      <a class="nav-icon" href="https://github.com/ascending-llc/jarvis-embed" title="GitHub">
+        <img src="assets/github-icon.png" alt="GitHub">
+      </a>
+    </div>
+  </nav>
+
+  <div class="install-section">
+    <div class="install-grid">
+      <div class="install-card">
+        <div class="label">Script Tag (CDN)</div>
+        <div class="copy-row">
+          <code id="cdn-url">&lt;script src="https://ascending-llc.github.io/jarvis-embed/latest/jarvis-embed.js"&gt;&lt;/script&gt;</code>
+          <button class="copy-btn" data-copy-id="cdn-url">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+          </button>
+        </div>
+      </div>
+      <div class="install-card">
+        <div class="label">npm</div>
+        <div class="copy-row">
+          <code id="npm-install">npm install @ascending-inc/jarvis-embed</code>
+          <button class="copy-btn" data-copy-id="npm-install">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="markdown-body">
+    {{README_CONTENT}}
+  </div>
+
+  <script>
+    const COPY_ICON = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>';
+    const CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>';
+
+    document.querySelectorAll('.copy-btn[data-copy-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const source = document.getElementById(btn.dataset.copyId);
+        const text = source.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          btn.classList.add('copied');
+          btn.innerHTML = CHECK_ICON;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = COPY_ICON;
+          }, 2000);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

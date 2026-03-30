@@ -1,6 +1,6 @@
 # Jarvis Embed SDK
 
-Embed the Jarvis AI Assistant in any web application.
+Embed the Jarvis AI Assistant in any web application. Works with bundlers and script tags.
 
 ---
 

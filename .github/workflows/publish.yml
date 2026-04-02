@@ -21,7 +21,8 @@ on:
     branches: [main]
     paths:
       - 'README.md'
-      - 'landing/**'
+      - 'docs/**'
+      - 'mkdocs.yml'
 
 permissions:
   contents: write
@@ -90,7 +91,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Check if gh-pages branch exists, create orphan if not
+          # Build docs
+          pip install "mkdocs>=1.6,<2.0" mkdocs-material mkdocs-static-i18n --quiet
+          cp README.md docs/jarvis-embed/index.md
+          mkdocs build
+
+          # Add versioned and latest JS into the build output
+          mkdir -p site/$VERSION site/latest
+          cp dist/index.global.js site/$VERSION/jarvis-embed.js
+          cp dist/index.global.js site/latest/jarvis-embed.js
+
+          # Deploy to gh-pages
           if git ls-remote --exit-code --heads origin gh-pages; then
             git fetch origin gh-pages
             git worktree add /tmp/gh-pages gh-pages
@@ -98,23 +109,7 @@ jobs:
             git worktree add --orphan -b gh-pages /tmp/gh-pages
           fi
 
-          # Copy versioned JS build
-          mkdir -p /tmp/gh-pages/$VERSION
-          cp dist/index.global.js /tmp/gh-pages/$VERSION/jarvis-embed.js
-
-          # Update latest
-          mkdir -p /tmp/gh-pages/latest
-          cp dist/index.global.js /tmp/gh-pages/latest/jarvis-embed.js
-
-          # Assemble landing page: inject rendered README into template
-          npx --yes marked README.md > /tmp/readme.html
-          node -e "
-            const fs = require('fs');
-            const template = fs.readFileSync('landing/template.html', 'utf8');
-            const readme = fs.readFileSync('/tmp/readme.html', 'utf8');
-            fs.writeFileSync('/tmp/gh-pages/index.html', template.replace('{{README_CONTENT}}', readme));
-          "
-          cp -r landing/assets /tmp/gh-pages/assets
+          cp -r site/. /tmp/gh-pages/
 
           cd /tmp/gh-pages
           git add .
@@ -129,15 +124,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
       - name: Deploy docs to GitHub Pages
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          # Build docs
+          pip install "mkdocs>=1.6,<2.0" mkdocs-material mkdocs-static-i18n --quiet
+          cp README.md docs/jarvis-embed/index.md
+          mkdocs build
+
+          # Deploy to gh-pages (docs only — JS folders are preserved via cp merge)
           if git ls-remote --exit-code --heads origin gh-pages; then
             git fetch origin gh-pages
             git worktree add /tmp/gh-pages gh-pages
@@ -145,15 +142,7 @@ jobs:
             git worktree add --orphan -b gh-pages /tmp/gh-pages
           fi
 
-          # Assemble landing page only — leave JS folders untouched
-          npx --yes marked README.md > /tmp/readme.html
-          node -e "
-            const fs = require('fs');
-            const template = fs.readFileSync('landing/template.html', 'utf8');
-            const readme = fs.readFileSync('/tmp/readme.html', 'utf8');
-            fs.writeFileSync('/tmp/gh-pages/index.html', template.replace('{{README_CONTENT}}', readme));
-          "
-          cp -r landing/assets /tmp/gh-pages/assets
+          cp -r site/. /tmp/gh-pages/
 
           cd /tmp/gh-pages
           git add .

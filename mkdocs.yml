@@ -1,0 +1,97 @@
+site_name: Ascending Jarvis Embed Package
+site_url: https://ascending-llc.github.io/jarvis-embed/
+repo_url: https://github.com/ascending-llc/jarvis-embed
+repo_name: ascending-llc/jarvis-embed
+
+theme:
+  name: material
+  logo: assets/jarvis-logo-dark.png
+  favicon: assets/jarvis-logo-dark.png
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: es
+          name: Español
+          build: true
+          nav_translations:
+            Overview: Descripción general
+        - locale: zh
+          name: 中文
+          build: true
+          nav_translations:
+            Overview: 概述
+        - locale: hi
+          name: हिन्दी
+          build: true
+          nav_translations:
+            Overview: अवलोकन
+
+extra:
+  alternate:
+    - name: English
+      link: /jarvis-embed/
+      lang: en
+    - name: Español
+      link: /jarvis-embed/es/
+      lang: es
+    - name: 中文
+      link: /jarvis-embed/zh/
+      lang: zh
+    - name: हिन्दी
+      link: /jarvis-embed/hi/
+      lang: hi
+  social:
+    - icon: fontawesome/brands/npm
+      link: https://www.npmjs.com/package/@ascending-inc/jarvis-embed
+      name: jarvis-embed on npm
+    - icon: fontawesome/brands/github
+      link: https://github.com/ascending-llc/jarvis-embed
+      name: jarvis-embed on GitHub
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/header.js
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Overview: jarvis-embed/index.md

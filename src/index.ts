@@ -10,11 +10,13 @@ export class JarvisEmbed {
   private messageHandler: ((e: MessageEvent) => void) | null = null;
   private sdkReady = false;
   private pendingMcpServers: string[] | null = null;
+  private pendingArtifactsButton: boolean | null;
   private destroyed = false;
 
   constructor(config: JarvisConfig) {
     this.config = config;
     this.apiUrl = config.apiUrl?.replace(/\/$/, '') ?? 'https://jarvis.ascendingdc.com';
+    this.pendingArtifactsButton = config.artifactsButton ?? false;
     this.start();
   }
 
@@ -30,6 +32,18 @@ export class JarvisEmbed {
     this.iframe!.contentWindow!.postMessage({ type: 'SDK_MCP', servers }, chatOrigin);
   }
 
+  setArtifactsButton(enabled: boolean): void {
+    const isReady = this.sdkReady && this.iframe?.contentWindow != null;
+
+    if (!isReady) {
+      this.pendingArtifactsButton = enabled;
+      return;
+    }
+
+    const chatOrigin = new URL(this.apiUrl).origin;
+    this.iframe!.contentWindow!.postMessage({ type: 'SDK_ARTIFACTS', enabled }, chatOrigin);
+  }
+
   destroy(): void {
     this.destroyed = true;
     if (this.messageHandler) {
@@ -40,6 +54,7 @@ export class JarvisEmbed {
     this.iframe = null;
     this.sdkReady = false;
     this.pendingMcpServers = null;
+    this.pendingArtifactsButton = null;
   }
 
   private async start(): Promise<void> {
@@ -89,6 +104,12 @@ export class JarvisEmbed {
       if (hasPendingServers) {
         iframe.contentWindow!.postMessage({ type: 'SDK_MCP', servers: this.pendingMcpServers }, chatOrigin);
         this.pendingMcpServers = null;
+      }
+
+      const hasPendingArtifactsButton = this.pendingArtifactsButton != null && iframe.contentWindow != null;
+      if (hasPendingArtifactsButton) {
+        iframe.contentWindow!.postMessage({ type: 'SDK_ARTIFACTS', enabled: this.pendingArtifactsButton }, chatOrigin);
+        this.pendingArtifactsButton = null;
       }
     };
     window.addEventListener('message', this.messageHandler);

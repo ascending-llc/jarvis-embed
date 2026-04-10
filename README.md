@@ -47,6 +47,7 @@ const jarvis = new JarvisEmbed({
   token:       googleIdToken,
   containerId: 'chat-container',
   model:       'my-spec',
+  artifactsButton: false,
   onReady:     (jarvisToken) => jarvis.setMcpServers(['my-mcp-server']),
 });
 ```
@@ -65,6 +66,7 @@ const jarvis = new JarvisEmbed({
 | `height` | `string` | `'600px'` | CSS height of the iframe. |
 | `apiUrl` | `string` | `https://jarvis.ascendingdc.com` | Override for self-hosted deployments. |
 | `model` | `string` | — | Spec identifier to use for the conversation (sent as `?spec=` to the API). Retrieve available values from `GET {apiUrl}/api/config`. |
+| `artifactsButton` | `boolean` | `false` | Initial visibility state of the artifacts button in the embedded chat UI. |
 | `debug` | `boolean` | `false` | Log SDK activity to the console. |
 | `onReady` | `(jarvisToken: string) => void` | — | Fires when the iframe is authenticated and ready. Receives the Jarvis session token — use it to call Jarvis APIs (e.g. `GET {apiUrl}/api/mcp/servers`) on behalf of the user. |
 | `onError` | `(err: Error) => void` | — | Fires on failure. |
@@ -191,6 +193,16 @@ To swap the active server set later (e.g. after a user action), call `setMcpServ
 document.getElementById('enable-analytics')?.addEventListener('click', () => {
   jarvis.setMcpServers(['posthog']);
 });
+```
+
+### `setArtifactsButton(enabled: boolean)`
+
+Shows or hides the artifacts button at runtime.
+If called before the iframe is ready, the value is queued and applied once the SDK is ready.
+
+```ts
+jarvis.setArtifactsButton(true);
+jarvis.setArtifactsButton(false);
 ```
 
 ---

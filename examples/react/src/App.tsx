@@ -20,6 +20,7 @@ export default function App() {
   const [mcpServers, setMcpServers] = useState<McpServer[]>([]);
   const [mcpSearch, setMcpSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [agentIdInput, setAgentIdInput] = useState();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const onReady = useCallback(async (jarvisToken: string) => {
@@ -44,6 +45,7 @@ export default function App() {
       height: '100%',
       onReady,
       onError: (err: Error) => console.error('[Jarvis]', err),
+      artifactsButton: true,
     };
   }, [appConfig, googleToken, container, onReady]);
 
@@ -107,6 +109,22 @@ export default function App() {
     setDropdownOpen(false);
   }
 
+  function showArtifactsButton() {
+    jarvisRef.current?.setArtifactsButton(true);
+  }
+
+  function hideArtifactsButton() {
+    jarvisRef.current?.setArtifactsButton(false);
+  }
+
+  function applyAgentId() {
+    const normalizedAgentId = agentIdInput?.trim();
+    if (!normalizedAgentId) {
+      return;
+    }
+    jarvisRef.current?.setAgentId(normalizedAgentId);
+  }
+
   const filteredServers = mcpServers.filter((s) =>
     s.name.toLowerCase().includes(mcpSearch.toLowerCase()),
   );
@@ -125,48 +143,62 @@ export default function App() {
         </div>
       ) : (
         <div style={{ width: 420, height: 620, borderRadius: 16, overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,.15)', display: 'flex', flexDirection: 'column', background: '#fff' }}>
-          {mcpServers.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 8, background: '#f3f4f6', borderBottom: '1px solid #e5e7eb' }}>
-              <div ref={dropdownRef} style={{ position: 'relative', flex: 1 }}>
-                <button
-                  onClick={() => setDropdownOpen((o) => !o)}
-                  style={{ width: '100%', padding: '5px 10px', background: '#fff', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '0.8rem', textAlign: 'left', cursor: 'pointer' }}
-                >
-                  Select tools...
-                </button>
-                {dropdownOpen && (
-                  <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #d1d5db', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 10, overflow: 'hidden' }}>
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={mcpSearch}
-                      onChange={(e) => setMcpSearch(e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', border: 'none', borderBottom: '1px solid #e5e7eb', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box' }}
-                    />
-                    <div style={{ maxHeight: 180, overflowY: 'auto' }}>
-                      {filteredServers.map((server) => (
-                        <label key={server.name} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', fontSize: '0.82rem', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={server.checked}
-                            onChange={() =>
-                              setMcpServers((prev) =>
-                                prev.map((s) => s.name === server.name ? { ...s, checked: !s.checked } : s),
-                              )
-                            }
-                          />
-                          {server.name}
-                        </label>
-                      ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 8, background: '#f3f4f6', borderBottom: '1px solid #e5e7eb' }}>
+            <input
+              value={agentIdInput}
+              onChange={(e) => setAgentIdInput(e.target.value)}
+              placeholder="Agent ID"
+              style={{ width: 100, minWidth: 100, padding: '5px 10px', background: '#fff', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '0.8rem' }}
+            />
+            <button
+              onClick={applyAgentId}
+              style={{ padding: '5px 10px', background: '#fff', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              Apply
+            </button>
+            {mcpServers.length > 0 && (
+              <>
+                <div ref={dropdownRef} style={{ position: 'relative', flex: 1 }}>
+                  <button
+                    onClick={() => setDropdownOpen((o) => !o)}
+                    style={{ width: '100%', padding: '5px 10px', background: '#fff', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '0.8rem', textAlign: 'left', cursor: 'pointer' }}
+                  >
+                    Select tools...
+                  </button>
+                  {dropdownOpen && (
+                    <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #d1d5db', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 10, overflow: 'hidden' }}>
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        value={mcpSearch}
+                        onChange={(e) => setMcpSearch(e.target.value)}
+                        style={{ width: '100%', padding: '8px 10px', border: 'none', borderBottom: '1px solid #e5e7eb', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box' }}
+                      />
+                      <div style={{ maxHeight: 180, overflowY: 'auto' }}>
+                        {filteredServers.map((server) => (
+                          <label key={server.name} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', fontSize: '0.82rem', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={server.checked}
+                              onChange={() =>
+                                setMcpServers((prev) =>
+                                  prev.map((s) => s.name === server.name ? { ...s, checked: !s.checked } : s),
+                                )
+                              }
+                            />
+                            {server.name}
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-              <button onClick={applyMcpServers} style={{ padding: '5px 14px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 6, fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                Apply
-              </button>
-            </div>
-          )}
+                  )}
+                </div>
+                <button onClick={applyMcpServers} style={{ padding: '5px 14px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 6, fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  Apply
+                </button>
+              </>
+            )}
+          </div>
           {/* callback ref: triggers re-render when div mounts, so useMemo picks up the container */}
           <div ref={setContainer} style={{ flex: 1, overflow: 'hidden' }} />
         </div>

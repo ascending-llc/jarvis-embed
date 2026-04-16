@@ -15,6 +15,8 @@ type BaseConfig = {
   height?: string;
   apiUrl?: string;
   model?: string;
+  agentId?: string;
+  agent_id?: string;
   artifactsButton?: boolean;
   debug?: boolean;
   onReady?: (jarvisToken: string) => void;

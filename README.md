@@ -47,6 +47,7 @@ const jarvis = new JarvisEmbed({
   token:       googleIdToken,
   containerId: 'chat-container',
   model:       'my-spec',
+  agentId:     'agent_123',
   artifactsButton: false,
   onReady:     (jarvisToken) => jarvis.setMcpServers(['my-mcp-server']),
 });
@@ -66,6 +67,8 @@ const jarvis = new JarvisEmbed({
 | `height` | `string` | `'600px'` | CSS height of the iframe. |
 | `apiUrl` | `string` | `https://jarvis.ascendingdc.com` | Override for self-hosted deployments. |
 | `model` | `string` | — | Spec identifier to use for the conversation (sent as `?spec=` to the API). Retrieve available values from `GET {apiUrl}/api/config`. |
+| `agentId` | `string` | — | Agent identifier to use for the conversation (sent as `?agent_id=` to the embedded chat). |
+| `agent_id` | `string` | — | Backward-compatible alias for `agentId`. If both are provided, `agentId` takes precedence. |
 | `artifactsButton` | `boolean` | `false` | Initial visibility state of the artifacts button in the embedded chat UI. |
 | `debug` | `boolean` | `false` | Log SDK activity to the console. |
 | `onReady` | `(jarvisToken: string) => void` | — | Fires when the iframe is authenticated and ready. Receives the Jarvis session token — use it to call Jarvis APIs (e.g. `GET {apiUrl}/api/mcp/servers`) on behalf of the user. |
@@ -80,6 +83,30 @@ Available specs can be retrieved from the Jarvis config endpoint:
 
 ```
 GET https://jarvis-demo.ascendingdc.com/api/config
+```
+
+### Using an agent
+
+To start the embedded chat in agent mode, pass `agentId` in the constructor config:
+
+```ts
+new JarvisEmbed({
+  provider:    'google',
+  token:       googleIdToken,
+  containerId: 'chat-container',
+  agentId:     'agent_123',
+});
+```
+
+If you need to preserve an existing snake_case integration, `agent_id` is also accepted:
+
+```ts
+new JarvisEmbed({
+  provider:    'google',
+  token:       googleIdToken,
+  containerId: 'chat-container',
+  agent_id:    'agent_123',
+});
 ```
 
 ---
@@ -130,6 +157,8 @@ Requests older than 5 minutes are rejected server-side.
 |--------|-----------|-------------|
 | `destroy` | `() => void` | Removes the iframe and cleans up the `window` message listener. Call this on unmount — essential for React. |
 | `setMcpServers` | `(servers: string[]) => void` | Activates one or more [MCP](https://modelcontextprotocol.io) servers by name. Safe to call before the iframe is ready — servers are queued and flushed automatically on `SDK_READY`. |
+| `setArtifactsButton` | `(enabled: boolean) => void` | Shows or hides the artifacts button at runtime. Safe to call before the iframe is ready — the latest value is queued and applied automatically on `SDK_READY`. |
+| `setAgentId` | `(agentId: string) => void` | Switches the embedded chat to a specific agent at runtime. Safe to call before the iframe is ready — the latest value is queued and applied automatically on `SDK_READY`. Empty or whitespace-only values are ignored. |
 
 ---
 
@@ -203,6 +232,24 @@ If called before the iframe is ready, the value is queued and applied once the S
 ```ts
 jarvis.setArtifactsButton(true);
 jarvis.setArtifactsButton(false);
+```
+
+### `setAgentId(agentId: string)`
+
+Switches the embedded chat to a specific agent at runtime.
+If called before the iframe is ready, the value is queued and applied once the SDK is ready.
+
+```ts
+jarvis.setAgentId('agent_123');
+```
+
+This is useful when the host app lets the user choose an agent after the widget has already been mounted:
+
+```ts
+document.getElementById('agent-picker')?.addEventListener('change', (event) => {
+  const nextAgentId = (event.target as HTMLSelectElement).value;
+  jarvis.setAgentId(nextAgentId);
+});
 ```
 
 ---

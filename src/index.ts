@@ -11,13 +11,19 @@ export class JarvisEmbed {
   private sdkReady = false;
   private pendingMcpServers: string[] | null = null;
   private pendingArtifactsButton: boolean | null;
+  private pendingAgentId: string | null;
   private destroyed = false;
 
   constructor(config: JarvisConfig) {
     this.config = config;
     this.apiUrl = config.apiUrl?.replace(/\/$/, '') ?? 'https://jarvis.ascendingdc.com';
     this.pendingArtifactsButton = config.artifactsButton ?? false;
+    this.pendingAgentId = this.getConfiguredAgentId() ?? null;
     this.start();
+  }
+
+  private getConfiguredAgentId(): string | undefined {
+    return this.config.agentId ?? this.config.agent_id;
   }
 
   setMcpServers(servers: string[]): void {
@@ -44,6 +50,25 @@ export class JarvisEmbed {
     this.iframe!.contentWindow!.postMessage({ type: 'SDK_ARTIFACTS', enabled }, chatOrigin);
   }
 
+  setAgentId(agentId: string): void {
+    const normalizedAgentId = agentId.trim();
+    if (!normalizedAgentId) {
+      return;
+    }
+
+    const isReady = this.sdkReady && this.iframe?.contentWindow != null;
+    if (!isReady) {
+      this.pendingAgentId = normalizedAgentId;
+      return;
+    }
+
+    const chatOrigin = new URL(this.apiUrl).origin;
+    this.iframe!.contentWindow!.postMessage(
+      { type: 'SDK_AGENT', agentId: normalizedAgentId },
+      chatOrigin,
+    );
+  }
+
   destroy(): void {
     this.destroyed = true;
     if (this.messageHandler) {
@@ -55,6 +80,7 @@ export class JarvisEmbed {
     this.sdkReady = false;
     this.pendingMcpServers = null;
     this.pendingArtifactsButton = null;
+    this.pendingAgentId = null;
   }
 
   private async start(): Promise<void> {
@@ -74,10 +100,11 @@ export class JarvisEmbed {
     const container = this.resolveContainer();
     if (!container) return;
     const chatOrigin = new URL(this.apiUrl).origin;
-
     const iframe = document.createElement('iframe');
     const chatUrl = new URL(`${this.apiUrl}/v1/chat`);
     if (this.config.model) chatUrl.searchParams.set('spec', this.config.model);
+    const agentId = this.getConfiguredAgentId();
+    if (agentId) chatUrl.searchParams.set('agent_id', agentId);
     iframe.src = chatUrl.toString();
     iframe.title = 'Jarvis AI Assistant';
     iframe.style.cssText = `width:${this.config.width ?? '100%'};height:${this.config.height ?? '600px'};border:none;display:block;`;
@@ -110,6 +137,15 @@ export class JarvisEmbed {
       if (hasPendingArtifactsButton) {
         iframe.contentWindow!.postMessage({ type: 'SDK_ARTIFACTS', enabled: this.pendingArtifactsButton }, chatOrigin);
         this.pendingArtifactsButton = null;
+      }
+
+      const hasPendingAgentId = this.pendingAgentId != null && iframe.contentWindow != null;
+      if (hasPendingAgentId) {
+        iframe.contentWindow!.postMessage(
+          { type: 'SDK_AGENT', agentId: this.pendingAgentId },
+          chatOrigin,
+        );
+        this.pendingAgentId = null;
       }
     };
     window.addEventListener('message', this.messageHandler);

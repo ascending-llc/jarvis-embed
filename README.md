@@ -68,7 +68,6 @@ const jarvis = new JarvisEmbed({
 | `apiUrl` | `string` | `https://jarvis.ascendingdc.com` | Override for self-hosted deployments. |
 | `model` | `string` | — | Spec identifier to use for the conversation (sent as `?spec=` to the API). Retrieve available values from `GET {apiUrl}/api/config`. |
 | `agentId` | `string` | — | Agent identifier to use for the conversation (sent as `?agent_id=` to the embedded chat). |
-| `agent_id` | `string` | — | Backward-compatible alias for `agentId`. If both are provided, `agentId` takes precedence. |
 | `artifactsButton` | `boolean` | `false` | Initial visibility state of the artifacts button in the embedded chat UI. |
 | `debug` | `boolean` | `false` | Log SDK activity to the console. |
 | `onReady` | `(jarvisToken: string) => void` | — | Fires when the iframe is authenticated and ready. Receives the Jarvis session token — use it to call Jarvis APIs (e.g. `GET {apiUrl}/api/mcp/servers`) on behalf of the user. |
@@ -95,17 +94,6 @@ new JarvisEmbed({
   token:       googleIdToken,
   containerId: 'chat-container',
   agentId:     'agent_123',
-});
-```
-
-If you need to preserve an existing snake_case integration, `agent_id` is also accepted:
-
-```ts
-new JarvisEmbed({
-  provider:    'google',
-  token:       googleIdToken,
-  containerId: 'chat-container',
-  agent_id:    'agent_123',
 });
 ```
 

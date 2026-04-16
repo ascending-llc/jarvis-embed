@@ -23,7 +23,7 @@ export class JarvisEmbed {
   }
 
   private getConfiguredAgentId(): string | undefined {
-    return this.config.agentId ?? this.config.agent_id;
+    return this.config.agentId;
   }
 
   setMcpServers(servers: string[]): void {

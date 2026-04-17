@@ -5,6 +5,8 @@ export type { JarvisConfig };
 export class JarvisEmbed {
   private readonly config: JarvisConfig;
   private readonly apiUrl: string;
+  private readonly iframeUrl: string;
+  private readonly iframeOrigin: string;
 
   private iframe: HTMLIFrameElement | null = null;
   private messageHandler: ((e: MessageEvent) => void) | null = null;
@@ -17,6 +19,8 @@ export class JarvisEmbed {
   constructor(config: JarvisConfig) {
     this.config = config;
     this.apiUrl = config.apiUrl?.replace(/\/$/, '') ?? 'https://jarvis.ascendingdc.com';
+    this.iframeUrl = new URL(config.iframeUrl ?? '/v1/chat', this.apiUrl).toString();
+    this.iframeOrigin = new URL(this.iframeUrl).origin;
     this.pendingArtifactsButton = config.artifactsButton ?? false;
     this.pendingAgentId = this.getConfiguredAgentId() ?? null;
     this.start();
@@ -34,8 +38,7 @@ export class JarvisEmbed {
       return;
     }
 
-    const chatOrigin = new URL(this.apiUrl).origin;
-    this.iframe!.contentWindow!.postMessage({ type: 'SDK_MCP', servers }, chatOrigin);
+    this.iframe!.contentWindow!.postMessage({ type: 'SDK_MCP', servers }, this.iframeOrigin);
   }
 
   setArtifactsButton(enabled: boolean): void {
@@ -46,8 +49,10 @@ export class JarvisEmbed {
       return;
     }
 
-    const chatOrigin = new URL(this.apiUrl).origin;
-    this.iframe!.contentWindow!.postMessage({ type: 'SDK_ARTIFACTS', enabled }, chatOrigin);
+    this.iframe!.contentWindow!.postMessage(
+      { type: 'SDK_ARTIFACTS', enabled },
+      this.iframeOrigin,
+    );
   }
 
   setAgentId(agentId: string): void {
@@ -62,10 +67,9 @@ export class JarvisEmbed {
       return;
     }
 
-    const chatOrigin = new URL(this.apiUrl).origin;
     this.iframe!.contentWindow!.postMessage(
       { type: 'SDK_AGENT', agentId: normalizedAgentId },
-      chatOrigin,
+      this.iframeOrigin,
     );
   }
 
@@ -99,22 +103,25 @@ export class JarvisEmbed {
 
     const container = this.resolveContainer();
     if (!container) return;
-    const chatOrigin = new URL(this.apiUrl).origin;
     const iframe = document.createElement('iframe');
-    const chatUrl = new URL(`${this.apiUrl}/v1/chat`);
-    if (this.config.model) chatUrl.searchParams.set('spec', this.config.model);
+    const chatUrl = new URL(this.iframeUrl);
+    if (this.config.model && !chatUrl.searchParams.has('spec')) {
+      chatUrl.searchParams.set('spec', this.config.model);
+    }
     const agentId = this.getConfiguredAgentId();
-    if (agentId) chatUrl.searchParams.set('agent_id', agentId);
+    if (agentId && !chatUrl.searchParams.has('agent_id')) {
+      chatUrl.searchParams.set('agent_id', agentId);
+    }
     iframe.src = chatUrl.toString();
     iframe.title = 'Jarvis AI Assistant';
     iframe.style.cssText = `width:${this.config.width ?? '100%'};height:${this.config.height ?? '600px'};border:none;display:block;`;
 
     iframe.addEventListener('load', () => {
-      iframe.contentWindow?.postMessage({ type: 'SDK_AUTH', token }, chatOrigin);
+      iframe.contentWindow?.postMessage({ type: 'SDK_AUTH', token }, this.iframeOrigin);
     });
 
     this.messageHandler = (e: MessageEvent) => {
-      const isCorrectOrigin = e.origin === chatOrigin;
+      const isCorrectOrigin = e.origin === this.iframeOrigin;
       if (!isCorrectOrigin) return;
 
       const isSdkReady = e.data?.type === 'SDK_READY';
@@ -129,13 +136,19 @@ export class JarvisEmbed {
 
       const hasPendingServers = this.pendingMcpServers != null && iframe.contentWindow != null;
       if (hasPendingServers) {
-        iframe.contentWindow!.postMessage({ type: 'SDK_MCP', servers: this.pendingMcpServers }, chatOrigin);
+        iframe.contentWindow!.postMessage(
+          { type: 'SDK_MCP', servers: this.pendingMcpServers },
+          this.iframeOrigin,
+        );
         this.pendingMcpServers = null;
       }
 
       const hasPendingArtifactsButton = this.pendingArtifactsButton != null && iframe.contentWindow != null;
       if (hasPendingArtifactsButton) {
-        iframe.contentWindow!.postMessage({ type: 'SDK_ARTIFACTS', enabled: this.pendingArtifactsButton }, chatOrigin);
+        iframe.contentWindow!.postMessage(
+          { type: 'SDK_ARTIFACTS', enabled: this.pendingArtifactsButton },
+          this.iframeOrigin,
+        );
         this.pendingArtifactsButton = null;
       }
 
@@ -143,7 +156,7 @@ export class JarvisEmbed {
       if (hasPendingAgentId) {
         iframe.contentWindow!.postMessage(
           { type: 'SDK_AGENT', agentId: this.pendingAgentId },
-          chatOrigin,
+          this.iframeOrigin,
         );
         this.pendingAgentId = null;
       }

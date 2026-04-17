@@ -66,6 +66,7 @@ const jarvis = new JarvisEmbed({
 | `width` | `string` | `'100%'` | CSS width of the iframe. |
 | `height` | `string` | `'600px'` | CSS height of the iframe. |
 | `apiUrl` | `string` | `https://jarvis.ascendingdc.com` | Override for self-hosted deployments. |
+| `iframeUrl` | `string` | `{apiUrl}/v1/chat` | Override just the embedded chat page URL. Useful for local iframe testing while keeping auth/API calls pointed at `apiUrl`. |
 | `model` | `string` | — | Spec identifier to use for the conversation (sent as `?spec=` to the API). Retrieve available values from `GET {apiUrl}/api/config`. |
 | `agentId` | `string` | — | Agent identifier to use for the conversation (sent as `?agent_id=` to the embedded chat). |
 | `artifactsButton` | `boolean` | `false` | Initial visibility state of the artifacts button in the embedded chat UI. |
@@ -75,6 +76,26 @@ const jarvis = new JarvisEmbed({
 | `onMessage` | `(data: unknown) => void` | — | Fires when the iframe posts a message to the host page. |
 
 If neither `containerId` nor `container` is provided the iframe appends to `document.body`.
+
+### Local iframe testing
+
+If you want to use production auth/API endpoints but load the chat UI from a local dev server, set `iframeUrl` separately:
+
+```ts
+new JarvisEmbed({
+  provider: 'google',
+  token: googleIdToken,
+  containerId: 'chat-container',
+  apiUrl: 'https://jarvis.ascendingdc.com',
+  iframeUrl: 'http://localhost:3090/c/new',
+});
+```
+
+When `iframeUrl` is provided, the SDK will:
+
+- keep token exchange and API calls on `apiUrl`
+- load the iframe from `iframeUrl`
+- use the `iframeUrl` origin for `postMessage`
 
 ### Getting a spec
 

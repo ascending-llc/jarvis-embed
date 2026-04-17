@@ -46,6 +46,8 @@ export default function App() {
       onReady,
       onError: (err: Error) => console.error('[Jarvis]', err),
       artifactsButton: true,
+      agentId: 'agent_b1sQjmhCEWNBL_JSr75oC',
+      iframeUrl: 'http://localhost:3090/v1/chat'
     };
   }, [appConfig, googleToken, container, onReady]);
 

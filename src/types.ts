@@ -14,7 +14,10 @@ type BaseConfig = {
   width?: string;
   height?: string;
   apiUrl?: string;
+  iframeUrl?: string;
   model?: string;
+  agentId?: string;
+  artifactsButton?: boolean;
   debug?: boolean;
   onReady?: (jarvisToken: string) => void;
   onError?: (error: Error) => void;

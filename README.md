@@ -146,7 +146,7 @@ new JarvisEmbed({
 
 #### Generating the token on your server
 
-The token is an **RS256-signed JWT**. Your server signs the JWT using the an RSA private key and Jarvis verifies the token with the corresponding public key. The `iss`, `aud`, and `kid` values must match the configured values in the jarvis deployment.
+The token is an **RS256-signed JWT**. Your server signs the JWT using an RSA private key and Jarvis verifies the token with the corresponding public key. The `iss`, `aud`, and `kid` values must match the configured values in the jarvis deployment.
 
 **Required claims**
 
@@ -190,9 +190,9 @@ function generateJarvisToken(username, { expiresInHours = 1 } = {}) {
   const now = Math.floor(Date.now() / 1000);
 
   const payload = {
-    sub: username, // finds or creates the user in Jarvis
-    iss: JARVIS_ISS, // must match CUSTOM_JWT_ISSUER
-    aud: JARVIS_AUD, // must match CUSTOM_JWT_AUDIENCE
+    sub: username, 
+    iss: JARVIS_ISS, 
+    aud: JARVIS_AUD,
     iat: now,
     exp: now + expiresInHours * 3600,
   };

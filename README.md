@@ -146,7 +146,7 @@ new JarvisEmbed({
 
 #### Generating the token on your server
 
-The token is an **RS256-signed JWT**. Your server signs the JWT using the same RSA private key configured in Jarvis (`JWT_PRIVATE_KEY`). Jarvis verifies the token using that key, so the `iss`, `aud`, and `kid` values must match your deployment configuration.
+The token is an **RS256-signed JWT**. Your server signs the JWT using the an RSA private key and Jarvis verifies the token with the corresponding public key. The `iss`, `aud`, and `kid` values must match the configured values in the jarvis deployment.
 
 **Required claims**
 
@@ -191,8 +191,8 @@ function generateJarvisToken(username, { expiresInHours = 1 } = {}) {
 
   const payload = {
     sub: username, // finds or creates the user in Jarvis
-    iss: JARVIS_ISS,
-    aud: JARVIS_AUD,
+    iss: JARVIS_ISS, // must match CUSTOM_JWT_ISSUER
+    aud: JARVIS_AUD, // must match CUSTOM_JWT_AUDIENCE
     iat: now,
     exp: now + expiresInHours * 3600,
   };
@@ -218,9 +218,9 @@ The `iss`, `aud`, and `kid` values are deployment-specific constants that can be
 
 | Variable | Description |
 |----------|-------------|
-| `CUSTOM_JWT_PUBLIC_KEY` | PEM-encoded RSA private key. Jarvis uses this to verify tokens signed by your server. |
-| `CUSTOM_JWT_ISSUER` | Expected issuer claim value (e.g., "https://jarvis-instance.com").
-| `CUSTOM_JWT_AUDIENCE` | Expected audience claim value (e.g., "jarvis-services").
+| `CUSTOM_JWT_PUBLIC_KEY` | PEM-encoded RSA public key. Jarvis uses this to verify tokens signed by your server. |
+| `CUSTOM_JWT_ISSUER` | Expected issuer claim value (e.g., "https://jarvis-instance.com"). |
+| `CUSTOM_JWT_AUDIENCE` | Expected audience claim value (e.g., "jarvis-services"). |
 
 ### `hmac`
 

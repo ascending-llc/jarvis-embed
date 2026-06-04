@@ -133,9 +133,9 @@ These are the claims Jarvis validates on every token.
 
 | Claim | Type | Description |
 |-------|------|-------------|
-| `sub` | `string` | Username — **used to find or create the user in Jarvis**. Must be a stable, unique identifier for the user. |
+| `sub` | `string` | Username — a user's login ID. Must be a stable, unique identifier (e.g. username@domain.com) |
 | `iss` | `string` | Issuer — the base URL of the Jarvis deployment. |
-| `aud` | `string` | Audience — (e.g `"jarvis-services"`). |
+| `aud` | `string` | Audience — (e.g. `"jarvis-services"`). |
 | `iat` | `number` | Issued-at Unix timestamp (seconds). |
 | `exp` | `number` | Expiry Unix timestamp (seconds). Maximum 24 hours from `iat`. |
 

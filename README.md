@@ -144,7 +144,7 @@ new JarvisEmbed({
 });
 ```
 
-For guidanceon creating a Jarvis token, please refer to [Generating the token on your server](#generating-the-token-on-your-server)
+For guidance on creating a Jarvis token, please refer to [Generating the token on your server](docs/jarvis-embed/index.md#generating-the-token-on-your-server)
 
 ### `hmac`
 

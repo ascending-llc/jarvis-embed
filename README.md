@@ -144,7 +144,83 @@ new JarvisEmbed({
 });
 ```
 
-For guidance on creating a Jarvis token, please refer to [Generating the token on your server](docs/jarvis-embed/index.md#generating-the-token-on-your-server)
+#### Generating the token on your server
+
+The token is an **RS256-signed JWT**. Your server signs the JWT using an RSA private key and Jarvis verifies the token with the corresponding public key. The `iss`, `aud`, and `kid` values must match the configured values in the jarvis deployment.
+
+**Required claims**
+
+These are the claims Jarvis validates on every token.
+
+| Claim | Type | Description |
+|-------|------|-------------|
+| `sub` | `string` | Username — a user's login ID. Must be a stable, unique identifier (e.g. username@domain.com) |
+| `iss` | `string` | Issuer — the base URL of the Jarvis deployment. |
+| `aud` | `string` | Audience — (e.g. `"jarvis-services"`). |
+| `iat` | `number` | Issued-at Unix timestamp (seconds). |
+| `exp` | `number` | Expiry Unix timestamp (seconds). Maximum 24 hours from `iat`. |
+
+**Optional claims**
+
+Included if present, not required for the token to be accepted.
+
+| Claim | Type | Description |
+|-------|------|-------------|
+| `user_id` | `string` | User identifier (may be the same as `sub`). |
+| `scope` | `string` | Space-separated permission scopes (e.g. `"read write"`). |
+| `groups` | `string[]` | Groups the user belongs to. |
+
+**JWT header**
+
+| Field | Value |
+|-------|-------|
+| `alg` | `RS256` |
+| `kid` | Key ID  |
+
+**Node.js example**
+
+```js
+import jwt from 'jsonwebtoken';
+
+const JARVIS_ISS = 'https://jarvis-instance.com';
+const JARVIS_AUD = 'jarvis-services';
+const JARVIS_KID = 'self-signed-key-v1';
+
+function generateJarvisToken(username, { expiresInHours = 1 } = {}) {
+  const now = Math.floor(Date.now() / 1000);
+
+  const payload = {
+    sub: username,
+    iss: JARVIS_ISS, 
+    aud: JARVIS_AUD, 
+    iat: now,
+    exp: now + expiresInHours * 3600,
+  };
+
+  return jwt.sign(payload, process.env.CUSTOM_JWT_PRIVATE_KEY, {
+    algorithm: 'RS256',
+    keyid:     JARVIS_KID,
+  });
+}
+```
+
+#### Environment variables
+
+**Your server**
+
+| Variable | Description |
+|----------|-------------|
+| `CUSTOM_JWT_PRIVATE_KEY` | PEM-encoded RSA private key used to sign tokens. |
+
+The `iss`, `aud`, and `kid` values are deployment-specific constants that can be hardcoded or stored them as environment variables. They must match exactly what Jarvis is configured to expect.
+
+**Jarvis**
+
+| Variable | Description |
+|----------|-------------|
+| `CUSTOM_JWT_PUBLIC_KEY` | PEM-encoded RSA public key. Jarvis uses this to verify tokens signed by your server. |
+| `CUSTOM_JWT_ISSUER` | Expected issuer claim value (e.g., "https://jarvis-instance.com"). |
+| `CUSTOM_JWT_AUDIENCE` | Expected audience claim value (e.g., "jarvis-services"). |
 
 ### `hmac`
 

@@ -212,7 +212,7 @@ function generateJarvisToken(username, { expiresInHours = 1 } = {}) {
 |----------|-------------|
 | `CUSTOM_JWT_PRIVATE_KEY` | PEM-encoded RSA private key used to sign tokens. |
 
-The `iss`, `aud`, and `kid` values are deployment-specific constants that can be hardcoded or stored them as environment variables. They must match exactly what Jarvis is configured to expect.
+The `iss`, `aud`, and `kid` values are deployment-specific constants that can be hardcoded or stored as environment variables. They must match exactly what Jarvis is configured to expect.
 
 **Jarvis**
 

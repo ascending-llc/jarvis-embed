@@ -22,6 +22,7 @@ A pre-built UMD bundle is served via GitHub Pages. Load the latest version direc
   const jarvis = new JarvisEmbed({
     provider:    'google',
     token:       googleIdToken,
+    apiUrl:      jarvisApiUrl,
     containerId: 'chat-container',
   });
 </script>
@@ -46,6 +47,7 @@ const jarvis = new JarvisEmbed({
   provider:    'google',
   token:       googleIdToken,
   containerId: 'chat-container',
+  apiUrl:       jarvisApiUrl,
   model:       'my-spec',
   agentId:     'agent_123',
   artifactsButton: false,
@@ -65,7 +67,7 @@ const jarvis = new JarvisEmbed({
 | `container` | `HTMLElement` | — | Direct element reference (alternative to `containerId`). |
 | `width` | `string` | `'100%'` | CSS width of the iframe. |
 | `height` | `string` | `'600px'` | CSS height of the iframe. |
-| `apiUrl` | `string` | `https://jarvis.ascendingdc.com` | Override for self-hosted deployments. |
+| `apiUrl` | `string` | required | Jarvis API endpoint (e.g. `https://jarvis.ascendingdc.com`). |
 | `iframeUrl` | `string` | `{apiUrl}/v1/chat` | Override just the embedded chat page URL. Useful for local iframe testing while keeping auth/API calls pointed at `apiUrl`. |
 | `model` | `string` | — | Spec identifier to use for the conversation (sent as `?spec=` to the API). Retrieve available values from `GET {apiUrl}/api/config`. |
 | `agentId` | `string` | — | Agent identifier to use for the conversation (sent as `?agent_id=` to the embedded chat). |
@@ -86,7 +88,7 @@ new JarvisEmbed({
   provider: 'google',
   token: googleIdToken,
   containerId: 'chat-container',
-  apiUrl: 'https://jarvis.ascendingdc.com',
+  apiUrl: 'http://localhost:3080',
   iframeUrl: 'http://localhost:3090/c/new',
 });
 ```
@@ -102,7 +104,7 @@ When `iframeUrl` is provided, the SDK will:
 Available specs can be retrieved from the Jarvis config endpoint:
 
 ```
-GET https://jarvis-demo.ascendingdc.com/api/config
+GET {apiUrl}/api/config
 ```
 
 ### Using an agent
@@ -431,7 +433,7 @@ cp examples/react/.env.example   examples/react/.env
 | `GOOGLE_CLIENT_ID` | OAuth client ID from [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
 | `GOOGLE_CLIENT_SECRET` | OAuth client secret (never sent to the browser) |
 | `REDIRECT_URI` | Must match what's registered in Google Cloud Console |
-| `JARVIS_URL` | `https://jarvis-demo.ascendingdc.com` or `http://localhost:3080` for local Jarvis |
+| `JARVIS_URL` | **Required** — Jarvis API endpoint (e.g. `https://jarvis.ascendingdc.com`) |
 | `JARVIS_MODEL` | Optional spec override |
 | `PORT` | Express port (default `5500`) |
 

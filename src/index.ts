@@ -18,7 +18,7 @@ export class JarvisEmbed {
 
   constructor(config: JarvisConfig) {
     this.config = config;
-    this.apiUrl = config.apiUrl?.replace(/\/$/, '') ?? 'https://jarvis.ascendingdc.com';
+    this.apiUrl = config.apiUrl.replace(/\/$/, '');
     this.iframeUrl = new URL(config.iframeUrl ?? '/v1/chat', this.apiUrl).toString();
     this.iframeOrigin = new URL(this.iframeUrl).origin;
     this.pendingArtifactsButton = config.artifactsButton ?? false;

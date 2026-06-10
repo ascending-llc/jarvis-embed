@@ -13,7 +13,7 @@ type BaseConfig = {
   container?: HTMLElement;
   width?: string;
   height?: string;
-  apiUrl?: string;
+  apiUrl: string;
   iframeUrl?: string;
   model?: string;
   agentId?: string;

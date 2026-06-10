@@ -9,10 +9,13 @@ app.use('/sdk', express.static(path.join(__dirname, '../../dist')));
 
 // Expose public config to the frontend (client secret never leaves the server)
 app.get('/api/config', (req, res) => {
+  if (!process.env.JARVIS_URL) {
+    return res.status(400).json({ error: 'JARVIS_URL environment variable is required' });
+  }
   res.json({
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     redirectUri: process.env.REDIRECT_URI,
-    jarvisUrl: process.env.JARVIS_URL ?? 'https://jarvis-demo.ascendingdc.com',
+    jarvisUrl: process.env.JARVIS_URL,
     jarvisModel: process.env.JARVIS_MODEL || undefined,
   });
 });

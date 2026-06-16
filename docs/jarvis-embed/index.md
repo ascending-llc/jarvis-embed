@@ -63,7 +63,7 @@ const jarvis = new JarvisEmbed({
 |--------|------|---------|-------------|
 | `provider` | `AuthProvider` | **Required** | Auth provider — see [Authentication](#authentication). |
 | `apiUrl` | `string` | **Required** | Jarvis API endpoint (e.g. `https://jarvis.host.com`). |
-| `token` | `string` | **Required** | OAuth / JWT token. Not used for `hmac`. |
+| `token` | `string` | **Required** (except `hmac`) | OAuth / JWT token. Omit for `hmac`. |
 | `containerId` | `string` | — | ID of the DOM element to mount the iframe into. |
 | `container` | `HTMLElement` | — | Direct element reference (alternative to `containerId`). |
 | `width` | `string` | `'100%'` | CSS width of the iframe. |
@@ -125,7 +125,7 @@ new JarvisEmbed({
 
 ## Authentication
 
-These providers forward a token to `POST {apiUrl}/api/auth/exchange`, and Jarvis returns a short-lived session token for the embedded chat.
+For `google`, `s_jwt`, `a_jwt`, and `hmac`, the SDK sends your auth payload to `POST {apiUrl}/api/auth/exchange`, and Jarvis returns a short-lived session token for the embedded chat. With `direct`, the SDK skips the exchange call and uses your JWT as-is.
 
 ### `google`
 
@@ -294,7 +294,7 @@ const jarvis = new JarvisEmbed({
   containerId: 'chat-container',
   apiUrl: 'https://jarvis.host.com',
   onReady: async (jarvisToken) => {
-    const res = await fetch(`https://jarvis.host.com/api/mcp/servers`, {
+    const res = await fetch(`${apiUrl}/api/mcp/servers`, {
       headers: { Authorization: `Bearer ${jarvisToken}` },
     });
     const servers = await res.json(); // { "posthog": {...}, "github": {...}, ... }

@@ -1,210 +1,142 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useJarvis } from './useJarvis';
+import { useEffect, useRef, useState } from 'react';
+import { JarvisEmbed } from 'jarvis-embed';
 
 type AppConfig = {
-  googleClientId: string;
-  redirectUri: string;
   jarvisUrl: string;
   jarvisModel?: string;
 };
 
-type McpServer = {
-  name: string;
-  checked: boolean;
-};
+const DEFAULT_MODEL = 'openai-gpt-5-5';
 
 export default function App() {
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
-  const [googleToken, setGoogleToken] = useState<string | null>(null);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
-  const [mcpServers, setMcpServers] = useState<McpServer[]>([]);
-  const [mcpSearch, setMcpSearch] = useState('');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [agentIdInput, setAgentIdInput] = useState();
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const onReady = useCallback(async (jarvisToken: string) => {
-    if (!appConfig) return;
-    const res = await fetch(`${appConfig.jarvisUrl}/api/mcp/servers`, {
-      headers: { Authorization: `Bearer ${jarvisToken}` },
-    });
-    if (!res.ok) return;
-    const data = await res.json();
-    setMcpServers(Object.keys(data).map((name) => ({ name, checked: false })));
-  }, [appConfig]);
-
-  const jarvisConfig = useMemo(() => {
-    if (!appConfig || !googleToken || !container) return null;
-    return {
-      provider: 'google' as const,
-      token: googleToken,
-      apiUrl: appConfig.jarvisUrl,
-      ...(appConfig.jarvisModel ? { model: appConfig.jarvisModel } : {}),
-      container,
-      width: '100%',
-      height: '100%',
-      onReady,
-      onError: (err: Error) => console.error('[Jarvis]', err),
-      artifactsButton: true,
-      agentId: 'agent_b1sQjmhCEWNBL_JSr75oC',
-      iframeUrl: 'http://localhost:3090/v1/chat'
-    };
-  }, [appConfig, googleToken, container, onReady]);
-
-  const jarvisRef = useJarvis(jarvisConfig);
+  const [token, setToken] = useState('');
+  const [serverName, setServerName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [connected, setConnected] = useState(false);
+  const embedRef = useRef<JarvisEmbed | null>(null);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-
-    if (code) {
-      fetch('/api/google/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.token) sessionStorage.setItem('google_id_token', data.token);
-          window.history.replaceState({}, '', '/');
-          window.location.reload();
-        });
-      return;
-    }
-
     fetch('/api/config')
       .then((r) => r.json())
-      .then((data: AppConfig) => {
-        setAppConfig(data);
-        const storedToken = sessionStorage.getItem('google_id_token');
-        if (storedToken) {
-          sessionStorage.removeItem('google_id_token');
-          setGoogleToken(storedToken);
-        }
-      });
+      .then((data: AppConfig) => setAppConfig(data))
+      .catch(() => setError('Failed to load Jarvis config'));
   }, []);
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      const isOutside = dropdownRef.current && !dropdownRef.current.contains(e.target as Node);
-      if (isOutside) setDropdownOpen(false);
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      embedRef.current?.destroy();
+      embedRef.current = null;
+    };
   }, []);
 
-  function signInWithGoogle() {
-    if (!appConfig) return;
-    const params = new URLSearchParams({
-      client_id: appConfig.googleClientId,
-      redirect_uri: appConfig.redirectUri,
-      response_type: 'code',
-      scope: 'openid email profile',
-      access_type: 'online',
-    });
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-  }
+  function connectJarvis() {
+    const normalizedToken = token.trim();
+    const normalizedServerName = serverName.trim();
 
-  function applyMcpServers() {
-    const selected = mcpServers.filter((s) => s.checked).map((s) => s.name);
-    if (selected.length > 0) jarvisRef.current?.setMcpServers(selected);
-    setDropdownOpen(false);
-  }
-
-  function showArtifactsButton() {
-    jarvisRef.current?.setArtifactsButton(true);
-  }
-
-  function hideArtifactsButton() {
-    jarvisRef.current?.setArtifactsButton(false);
-  }
-
-  function applyAgentId() {
-    const normalizedAgentId = agentIdInput?.trim();
-    if (!normalizedAgentId) {
+    if (!appConfig || !container) {
+      setError('Jarvis demo is not ready yet');
       return;
     }
-    jarvisRef.current?.setAgentId(normalizedAgentId);
+
+    if (!normalizedToken) {
+      setError('Please paste a Jarvis token');
+      return;
+    }
+
+    embedRef.current?.destroy();
+    setError(null);
+    setConnected(false);
+
+    const JARVIS_URL = appConfig.jarvisUrl;
+    const iframeUrl = 'http://localhost:3090/v1/chat/new';
+
+    console.log('appConfig==>>', appConfig)
+
+    const embed = new JarvisEmbed({
+      provider: 'direct',
+      token: normalizedToken,
+      model: appConfig.jarvisModel ?? DEFAULT_MODEL,
+      apiUrl: JARVIS_URL,
+      iframeUrl,
+      container,
+      artifactsButton: true,
+      debug: true,
+      width: '100%',
+      height: '100%',
+      onReady: () => setConnected(true),
+      onError: () => setError('Failed to connect to Jarvis'),
+    });
+
+    embedRef.current = embed;
+
+    if (normalizedServerName) {
+      embed.setMcpServers([normalizedServerName]);
+    }
   }
 
-  const filteredServers = mcpServers.filter((s) =>
-    s.name.toLowerCase().includes(mcpSearch.toLowerCase()),
-  );
-
-  const isSignedIn = googleToken !== null;
-
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f9fafb' }}>
-      {!isSignedIn ? (
-        <div style={{ textAlign: 'center' }}>
-          <h1 style={{ marginBottom: 8 }}>Jarvis Embed — React Demo</h1>
-          <p style={{ color: '#6b7280', marginBottom: 24 }}>Sign in to start chatting.</p>
-          <button onClick={signInWithGoogle} style={{ padding: '10px 24px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 8, fontSize: '0.95rem', cursor: 'pointer' }}>
-            Sign in with Google
-          </button>
+    <div style={{ fontFamily: 'system-ui, sans-serif', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, background: '#f9fafb', padding: 24, boxSizing: 'border-box' }}>
+      <section style={{ width: 360, padding: 20, borderRadius: 16, background: '#fff', boxShadow: '0 12px 40px rgba(0,0,0,.12)' }}>
+        <h1 style={{ margin: '0 0 8px', fontSize: 22 }}>Jarvis Embed React Demo</h1>
+        <p style={{ margin: '0 0 18px', color: '#6b7280', fontSize: '0.92rem' }}>
+          Paste a direct Jarvis token and optionally pass one MCP server name.
+        </p>
+
+        <label style={{ display: 'block', marginBottom: 12 }}>
+          <span style={{ display: 'block', marginBottom: 6, color: '#374151', fontSize: '0.85rem', fontWeight: 600 }}>Token</span>
+          <textarea
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            placeholder="Paste direct token"
+            rows={7}
+            style={{ width: '100%', padding: 10, border: '1px solid #d1d5db', borderRadius: 8, fontSize: '0.85rem', resize: 'vertical', boxSizing: 'border-box' }}
+          />
+        </label>
+
+        <label style={{ display: 'block', marginBottom: 14 }}>
+          <span style={{ display: 'block', marginBottom: 6, color: '#374151', fontSize: '0.85rem', fontWeight: 600 }}>MCP Server Name</span>
+          <input
+            value={serverName}
+            onChange={(e) => setServerName(e.target.value)}
+            placeholder="serverName"
+            style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: '0.9rem', boxSizing: 'border-box' }}
+          />
+        </label>
+
+        <button
+          onClick={connectJarvis}
+          disabled={!appConfig || !container}
+          style={{ width: '100%', padding: '10px 16px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 8, fontSize: '0.95rem', cursor: appConfig && container ? 'pointer' : 'not-allowed', opacity: appConfig && container ? 1 : 0.6 }}
+        >
+          Connect
+        </button>
+
+        {error && (
+          <p style={{ margin: '12px 0 0', color: '#dc2626', fontSize: '0.85rem' }}>
+            {error}
+          </p>
+        )}
+        {connected && !error && (
+          <p style={{ margin: '12px 0 0', color: '#059669', fontSize: '0.85rem' }}>
+            Connected to Jarvis.
+          </p>
+        )}
+
+        <p style={{ margin: '14px 0 0', color: '#6b7280', fontSize: '0.78rem' }}>
+          API: {appConfig?.jarvisUrl ?? 'loading...'}
+          <br />
+          Model: {appConfig?.jarvisModel ?? DEFAULT_MODEL}
+        </p>
+      </section>
+
+      <div style={{ width: 560, height: 720, borderRadius: 16, overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,.15)', display: 'flex', flexDirection: 'column', background: '#fff' }}>
+        <div style={{ padding: '10px 14px', background: '#f3f4f6', borderBottom: '1px solid #e5e7eb', color: '#374151', fontSize: '0.9rem' }}>
+          Jarvis Chat
         </div>
-      ) : (
-        <div style={{ width: 420, height: 620, borderRadius: 16, overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,.15)', display: 'flex', flexDirection: 'column', background: '#fff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 8, background: '#f3f4f6', borderBottom: '1px solid #e5e7eb' }}>
-            <input
-              value={agentIdInput}
-              onChange={(e) => setAgentIdInput(e.target.value)}
-              placeholder="Agent ID"
-              style={{ width: 100, minWidth: 100, padding: '5px 10px', background: '#fff', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '0.8rem' }}
-            />
-            <button
-              onClick={applyAgentId}
-              style={{ padding: '5px 10px', background: '#fff', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
-            >
-              Apply
-            </button>
-            {mcpServers.length > 0 && (
-              <>
-                <div ref={dropdownRef} style={{ position: 'relative', flex: 1 }}>
-                  <button
-                    onClick={() => setDropdownOpen((o) => !o)}
-                    style={{ width: '100%', padding: '5px 10px', background: '#fff', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '0.8rem', textAlign: 'left', cursor: 'pointer' }}
-                  >
-                    Select tools...
-                  </button>
-                  {dropdownOpen && (
-                    <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #d1d5db', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 10, overflow: 'hidden' }}>
-                      <input
-                        type="text"
-                        placeholder="Search..."
-                        value={mcpSearch}
-                        onChange={(e) => setMcpSearch(e.target.value)}
-                        style={{ width: '100%', padding: '8px 10px', border: 'none', borderBottom: '1px solid #e5e7eb', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box' }}
-                      />
-                      <div style={{ maxHeight: 180, overflowY: 'auto' }}>
-                        {filteredServers.map((server) => (
-                          <label key={server.name} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', fontSize: '0.82rem', cursor: 'pointer' }}>
-                            <input
-                              type="checkbox"
-                              checked={server.checked}
-                              onChange={() =>
-                                setMcpServers((prev) =>
-                                  prev.map((s) => s.name === server.name ? { ...s, checked: !s.checked } : s),
-                                )
-                              }
-                            />
-                            {server.name}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <button onClick={applyMcpServers} style={{ padding: '5px 14px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: 6, fontSize: '0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  Apply
-                </button>
-              </>
-            )}
-          </div>
-          {/* callback ref: triggers re-render when div mounts, so useMemo picks up the container */}
-          <div ref={setContainer} style={{ flex: 1, overflow: 'hidden' }} />
-        </div>
-      )}
+        <div ref={setContainer} style={{ flex: 1, overflow: 'hidden' }} />
+      </div>
     </div>
   );
 }

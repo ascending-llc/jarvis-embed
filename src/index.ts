@@ -126,15 +126,25 @@ export class JarvisEmbed {
     iframe.src = chatUrl.toString();
     iframe.title = 'Jarvis AI Assistant';
     iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;background:transparent;';
+    let authSent = false;
 
     iframe.addEventListener('load', () => {
       this.hideStatusOverlay();
-      iframe.contentWindow?.postMessage({ type: 'SDK_AUTH', token }, this.iframeOrigin);
+      authSent = false;
     });
 
     this.messageHandler = (e: MessageEvent) => {
       const isCorrectOrigin = e.origin === this.iframeOrigin;
-      if (!isCorrectOrigin) return;
+      const isCurrentIframe = e.source === iframe.contentWindow;
+      if (!isCorrectOrigin || !isCurrentIframe) return;
+
+      const isAuthReady = e.data?.type === 'SDK_AUTH_READY';
+      if (isAuthReady) {
+        if (authSent) return;
+        authSent = true;
+        iframe.contentWindow?.postMessage({ type: 'SDK_AUTH', token }, this.iframeOrigin);
+        return;
+      }
 
       const isSdkReady = e.data?.type === 'SDK_READY';
       if (!isSdkReady) {

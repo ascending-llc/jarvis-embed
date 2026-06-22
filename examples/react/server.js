@@ -39,4 +39,4 @@ app.post('/api/google/token', async (req, res) => {
 });
 
 const port = process.env.PORT || 5500;
-app.listen(port, () => console.log(`API server running at http://localhost:${port}`));
+app.listen(port);

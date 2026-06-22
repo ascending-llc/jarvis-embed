@@ -52,8 +52,6 @@ export default function App() {
     const JARVIS_URL = appConfig.jarvisUrl;
     const iframeUrl = 'http://localhost:3090/v1/chat/new';
 
-    console.log('appConfig==>>', appConfig)
-
     const embed = new JarvisEmbed({
       provider: 'direct',
       token: normalizedToken,

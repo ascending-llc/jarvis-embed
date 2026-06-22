@@ -282,8 +282,6 @@ export class JarvisEmbed {
   }
 
   private async exchangeToken(auth: AuthPayload): Promise<string> {
-    if (this.config.debug) console.log('[JarvisEmbed] Exchanging token, provider:', auth.provider);
-
     const body: AuthPayload = auth.provider === 'hmac'
       ? { provider: 'hmac', userId: auth.userId, timestamp: auth.timestamp, signature: auth.signature }
       : { provider: auth.provider, token: auth.token };

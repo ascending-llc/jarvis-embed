@@ -10,7 +10,7 @@ app.get('/api/config', (req, res) => {
   }
   res.json({
     jarvisUrl: process.env.JARVIS_URL ?? 'https://jarvis-demo.ascendingdc.com',
-    jarvisModel: process.env.JARVIS_MODEL || undefined,
+    jarvisSpec: process.env.JARVIS_SPEC || undefined,
   });
 });
 

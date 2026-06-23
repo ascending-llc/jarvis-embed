@@ -120,8 +120,8 @@ export class JarvisEmbed {
 
     const iframe = document.createElement('iframe');
     const chatUrl = new URL(this.iframeUrl);
-    if (this.config.model && !chatUrl.searchParams.has('spec')) {
-      chatUrl.searchParams.set('spec', this.config.model);
+    if (this.config.spec && !chatUrl.searchParams.has('spec')) {
+      chatUrl.searchParams.set('spec', this.config.spec);
     }
     const agentId = this.getConfiguredAgentId();
     if (agentId && !chatUrl.searchParams.has('agent_id')) {

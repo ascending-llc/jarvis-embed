@@ -3,10 +3,10 @@ import { JarvisEmbed } from 'jarvis-embed';
 
 type AppConfig = {
   jarvisUrl: string;
-  jarvisModel?: string;
+  jarvisSpec?: string;
 };
 
-const DEFAULT_MODEL = 'openai-gpt-5-5';
+const DEFAULT_SPEC = 'openai-gpt-5-5';
 
 export default function App() {
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
@@ -55,7 +55,7 @@ export default function App() {
     const embed = new JarvisEmbed({
       provider: 'direct',
       token: normalizedToken,
-      model: appConfig.jarvisModel ?? DEFAULT_MODEL,
+      spec: appConfig.jarvisSpec ?? DEFAULT_SPEC,
       apiUrl: JARVIS_URL,
       iframeUrl,
       container,
@@ -125,7 +125,7 @@ export default function App() {
         <p style={{ margin: '14px 0 0', color: '#6b7280', fontSize: '0.78rem' }}>
           API: {appConfig?.jarvisUrl ?? 'loading...'}
           <br />
-          Model: {appConfig?.jarvisModel ?? DEFAULT_MODEL}
+          Spec: {appConfig?.jarvisSpec ?? DEFAULT_SPEC}
         </p>
       </section>
 

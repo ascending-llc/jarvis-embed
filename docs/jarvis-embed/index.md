@@ -48,7 +48,7 @@ const jarvis = new JarvisEmbed({
   token:       googleIdToken,
   containerId: 'chat-container',
   apiUrl:       'https://jarvis.host.com',
-  model:       'my-spec',
+  spec:        'my-spec',
   agentId:     'agent_123',
   artifactsButton: false,
   onReady:     (jarvisToken) => jarvis.setMcpServers(['my-mcp-server']),
@@ -69,7 +69,7 @@ const jarvis = new JarvisEmbed({
 | `width` | `string` | `'100%'` | CSS width of the iframe. |
 | `height` | `string` | `'600px'` | CSS height of the iframe. |
 | `iframeUrl` | `string` | `{apiUrl}/v1/chat` | Override just the embedded chat page URL. Useful for local iframe testing while keeping auth/API calls pointed at `apiUrl`. |
-| `model` | `string` | — | Spec identifier to use for the conversation (sent as `?spec=` to the API). Retrieve available values from `GET {apiUrl}/api/config`. |
+| `spec` | `string` | — | Spec identifier to use for the conversation (sent as `?spec=` to the API). Retrieve available values from `GET {apiUrl}/api/config`. |
 | `agentId` | `string` | — | Agent identifier to use for the conversation (sent as `?agent_id=` to the embedded chat). |
 | `artifactsButton` | `boolean` | `false` | Initial visibility state of the artifacts button in the embedded chat UI. |
 | `debug` | `boolean` | `false` | Log SDK activity to the console. |
@@ -465,7 +465,7 @@ cp examples/react/.env.example   examples/react/.env
 | `GOOGLE_CLIENT_SECRET` | OAuth client secret (never sent to the browser) |
 | `REDIRECT_URI` | Must match what's registered in Google Cloud Console |
 | `JARVIS_URL` | **Required** — Jarvis API endpoint (e.g. `https://jarvis.host.com`) |
-| `JARVIS_MODEL` | Optional spec override |
+| `JARVIS_SPEC` | Optional spec override |
 | `PORT` | Express port (default `5500`) |
 
 ### 3. Run an example

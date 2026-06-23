@@ -15,7 +15,7 @@ type BaseConfig = {
   height?: string;
   apiUrl: string;
   iframeUrl?: string;
-  model?: string;
+  spec?: string;
   agentId?: string;
   artifactsButton?: boolean;
   debug?: boolean;

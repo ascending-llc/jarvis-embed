@@ -19,8 +19,12 @@ export class JarvisEmbed {
   private destroyed = false;
 
   constructor(config: JarvisConfig) {
+    if (typeof config.apiUrl !== 'string' || config.apiUrl.trim() === '') {
+      throw new Error('JarvisEmbed: "apiUrl" is required and must be a non-empty string.');
+    }
+
     this.config = config;
-    this.apiUrl = config.apiUrl?.replace(/\/$/, '') ?? 'https://jarvis.ascendingdc.com';
+    this.apiUrl = config.apiUrl.trim().replace(/\/$/, '');
     this.iframeUrl = new URL(config.iframeUrl ?? '/v1/chat', this.apiUrl).toString();
     this.iframeOrigin = new URL(this.iframeUrl).origin;
     this.pendingArtifactsButton = config.artifactsButton ?? false;

@@ -22,6 +22,7 @@ A pre-built UMD bundle is served via GitHub Pages. Load the latest version direc
   const jarvis = new JarvisEmbed({
     provider:    'google',
     token:       googleIdToken,
+    apiUrl:      'https://jarvis.host.com',
     containerId: 'chat-container',
   });
 </script>
@@ -46,6 +47,7 @@ const jarvis = new JarvisEmbed({
   provider:    'google',
   token:       googleIdToken,
   containerId: 'chat-container',
+  apiUrl:       'https://jarvis.host.com',
   model:       'my-spec',
   agentId:     'agent_123',
   artifactsButton: false,
@@ -59,13 +61,14 @@ const jarvis = new JarvisEmbed({
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `provider` | `AuthProvider` | required | Auth provider — see [Authentication](#authentication). |
-| `token` | `string` | required* | OAuth / JWT token. *Not used for `hmac`. |
+| `provider` | `AuthProvider` | **Required** | Auth provider — see [Authentication](#authentication). |
+| `apiUrl` | `string` | **Required** | Jarvis API endpoint (e.g. `https://jarvis.host.com`). |
+| `token` | `string` | **Required** (except `hmac`) | OAuth / JWT token. Omit for `hmac`. |
 | `containerId` | `string` | — | ID of the DOM element to mount the iframe into. |
 | `container` | `HTMLElement` | — | Direct element reference (alternative to `containerId`). |
 | `width` | `string` | `'100%'` | CSS width of the iframe. |
 | `height` | `string` | `'600px'` | CSS height of the iframe. |
-| `apiUrl` | `string` | `https://jarvis.ascendingdc.com` | Override for self-hosted deployments. |
+| `iframeUrl` | `string` | `{apiUrl}/v1/chat` | Override just the embedded chat page URL. Useful for local iframe testing while keeping auth/API calls pointed at `apiUrl`. |
 | `model` | `string` | — | Spec identifier to use for the conversation (sent as `?spec=` to the API). Retrieve available values from `GET {apiUrl}/api/config`. |
 | `agentId` | `string` | — | Agent identifier to use for the conversation (sent as `?agent_id=` to the embedded chat). |
 | `artifactsButton` | `boolean` | `false` | Initial visibility state of the artifacts button in the embedded chat UI. |
@@ -76,12 +79,32 @@ const jarvis = new JarvisEmbed({
 
 If neither `containerId` nor `container` is provided the iframe appends to `document.body`.
 
+### Local iframe testing
+
+If you want to use production auth/API endpoints but load the chat UI from a local dev server, set `iframeUrl` separately:
+
+```ts
+new JarvisEmbed({
+  provider: 'google',
+  token: googleIdToken,
+  containerId: 'chat-container',
+  apiUrl: 'https://jarvis.host.com',
+  iframeUrl: 'http://localhost:3090/c/new',
+});
+```
+
+When `iframeUrl` is provided, the SDK will:
+
+- keep token exchange and API calls on `apiUrl`
+- load the iframe from `iframeUrl`
+- use the `iframeUrl` origin for `postMessage`
+
 ### Getting a spec
 
 Available specs can be retrieved from the Jarvis config endpoint:
 
 ```
-GET https://jarvis-demo.ascendingdc.com/api/config
+GET {apiUrl}/api/config
 ```
 
 ### Using an agent
@@ -93,6 +116,7 @@ new JarvisEmbed({
   provider:    'google',
   token:       googleIdToken,
   containerId: 'chat-container',
+  apiUrl: 'https://jarvis.host.com',
   agentId:     'agent_123',
 });
 ```
@@ -101,27 +125,131 @@ new JarvisEmbed({
 
 ## Authentication
 
-Calls `POST {apiUrl}/api/auth/exchange` with your auth payload and receives a Jarvis session token back.
+For `google`, `s_jwt`, `a_jwt`, and `hmac`, the SDK sends your auth payload to `POST {apiUrl}/api/auth/exchange`, and Jarvis returns a short-lived session token for the embedded chat. With `direct`, the SDK skips the exchange call and uses your JWT as-is.
 
-### `google` / `s_jwt` / `a_jwt`
+### `google`
+
+Pass the Google `id_token` you receive from OAuth2 directly — no server-side token signing is required.
 
 | Provider | Token |
 |----------|-------|
 | `google` | Google `id_token` from OAuth2 |
+
+### `s_jwt` / `a_jwt`
+
+| Provider | Token |
+|----------|-------|
 | `s_jwt` | JWT signed with a shared secret (HS256) |
 | `a_jwt` | JWT signed with a private key (RS256 / ES256) |
 
+#### Generating the token on your server
+
+Your server signs a JWT that Jarvis verifies. The two providers differ only in the signing algorithm and key material:
+
+| Provider | Algorithm | Signing key | Jarvis verifies with |
+|----------|-----------|-------------|----------------------|
+| `s_jwt` | `HS256` | A shared secret (`CUSTOM_JWT_SECRET`) | The same shared secret |
+| `a_jwt` | `RS256` (or `ES256`) | Your RSA/EC **private key** (`CUSTOM_JWT_PRIVATE_KEY`) | The matching **public key** |
+
+The `iss`, `aud`, and (for `a_jwt`) `kid` values must match the configured values in the Jarvis deployment.
+
+**Required claims**
+
+These are the claims Jarvis validates on every token.
+
+| Claim | Type | Description |
+|-------|------|-------------|
+| `sub` | `string` | Username — a user's login ID. Must be a stable, unique identifier (e.g. username@domain.com) |
+| `iss` | `string` | Issuer — the base URL of the Jarvis deployment. |
+| `aud` | `string` | Audience — (e.g. `"jarvis-services"`). |
+| `iat` | `number` | Issued-at Unix timestamp (seconds). |
+| `exp` | `number` | Expiry Unix timestamp (seconds). Maximum 24 hours from `iat`. |
+
+**JWT header**
+
+| Field | Value |
+|-------|-------|
+| `alg` | `HS256` for `s_jwt`, `RS256` / `ES256` for `a_jwt` |
+| `kid` | Key ID (`a_jwt` only) |
+
+**Node.js example**
+
+The payload is identical for both providers — only the signing options change. Swap the commented block to switch providers:
+
+```js
+import jwt from 'jsonwebtoken';
+
+const JARVIS_ISS = 'https://jarvis.host.com';
+const JARVIS_AUD = 'jarvis-services';
+
+function generateJarvisToken(username, { expiresInHours = 1 } = {}) {
+  const now = Math.floor(Date.now() / 1000);
+
+  const payload = {
+    sub: username,
+    iss: JARVIS_ISS,
+    aud: JARVIS_AUD,
+    iat: now,
+    exp: now + expiresInHours * 3600,
+  };
+
+  // a_jwt — sign with an RSA/EC private key
+  return jwt.sign(payload, process.env.CUSTOM_JWT_PRIVATE_KEY, {
+    algorithm: 'RS256',
+    keyid: 'self-signed-key-v1',
+  });
+
+  // s_jwt — sign with a shared secret
+  // return jwt.sign(payload, process.env.CUSTOM_JWT_SECRET, {
+  //   algorithm: 'HS256',
+  // });
+}
+```
+
+#### Environment variables
+
+**Your server**
+
+| Variable | Description |
+|----------|-------------|
+| `CUSTOM_JWT_PRIVATE_KEY` | PEM-encoded RSA/EC private key used to sign `a_jwt` tokens. |
+| `CUSTOM_JWT_SECRET` | Shared secret used to sign `s_jwt` tokens. |
+
+The `iss`, `aud`, and `kid` values are deployment-specific constants that can be hardcoded or stored as environment variables. They must match exactly what Jarvis is configured to expect.
+
+**Jarvis**
+
+| Variable | Description |
+|----------|-------------|
+| `CUSTOM_JWT_PUBLIC_KEY` | PEM-encoded RSA/EC public key. Jarvis uses this to verify `a_jwt` tokens signed by your server. |
+| `CUSTOM_JWT_SECRET` | Shared secret. Jarvis uses this to verify `s_jwt` tokens. |
+| `CUSTOM_JWT_ISSUER` | Expected issuer claim value (e.g., "https://jarvis.host.com"). |
+| `CUSTOM_JWT_AUDIENCE` | Expected audience claim value (e.g., "jarvis-services"). |
+| `ALLOW_EMBED` | Set to `true` to enable the embed token flow (`/api/auth/exchange` and direct tokens). |
+
 ### `direct`
 
-Pass a Jarvis session token you already hold — the SDK skips the `/api/auth/exchange` call entirely and uses the token as-is for `SDK_AUTH`.
+With `direct`, your server mints the Jarvis-trusted JWT itself and the SDK uses it **as-is** — the `/api/auth/exchange` round-trip is skipped.
 
 ```ts
 new JarvisEmbed({
   provider:    'direct',
-  token:       existingJarvisToken,
+  token:       jarvisToken, // generated by your server
+  apiUrl: 'https://jarvis.host.com',
   containerId: 'chat-container',
 });
 ```
+
+#### How the token is authenticated
+
+The `direct` token is delivered to the embedded chat via `SDK_AUTH` and presented as a **Bearer token** on every request to Jarvis. Jarvis validates it through its Passport strategies, choosing one per request:
+
+| Condition | Strategy |
+|-----------|----------|
+| `OPENID_REUSE_TOKENS=true` **and** the request carries a `token_provider=openid` cookie with a valid signed session | `openidJwt` |
+| Default | `jwt` |
+
+The `openidJwt` strategy loads the federated tokens from the **server-side session**, which is resolved using the **Session ID cookie** the browser sends with each request. If that cookie is missing, expired, or the session store has been cleared, `req.session` cannot be hydrated and Jarvis will fall back to the standard `jwt` strategy or return a `401` error code.
 
 ### `hmac`
 
@@ -132,6 +260,7 @@ new JarvisEmbed({
   timestamp: Math.floor(Date.now() / 1000),
   signature: hmacHex, // HMAC-SHA256(userId + timestamp)
   containerId: 'chat-container',
+  apiUrl: 'https://jarvis.host.com',
 });
 ```
 
@@ -163,8 +292,9 @@ const jarvis = new JarvisEmbed({
   provider:    'google',
   token:       googleIdToken,
   containerId: 'chat-container',
+  apiUrl: 'https://jarvis.host.com',
   onReady: async (jarvisToken) => {
-    const res = await fetch(`https://jarvis.ascendingdc.com/api/mcp/servers`, {
+    const res = await fetch(`${apiUrl}/api/mcp/servers`, {
       headers: { Authorization: `Bearer ${jarvisToken}` },
     });
     const servers = await res.json(); // { "posthog": {...}, "github": {...}, ... }
@@ -185,6 +315,7 @@ const jarvis = new JarvisEmbed({
   provider:    'google',
   token:       googleIdToken,
   containerId: 'chat-container',
+  apiUrl: 'https://jarvis.host.com',
   onReady: () => {
     jarvis.setMcpServers(['posthog', 'aws-knowledge']);
   },
@@ -198,6 +329,7 @@ const jarvis = new JarvisEmbed({
   provider:    's_jwt',
   token:       myJwt,
   containerId: 'chat-container',
+  apiUrl: 'https://jarvis.host.com',
 });
 
 // Called immediately — queued until SDK_READY
@@ -332,7 +464,7 @@ cp examples/react/.env.example   examples/react/.env
 | `GOOGLE_CLIENT_ID` | OAuth client ID from [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
 | `GOOGLE_CLIENT_SECRET` | OAuth client secret (never sent to the browser) |
 | `REDIRECT_URI` | Must match what's registered in Google Cloud Console |
-| `JARVIS_URL` | `https://jarvis-demo.ascendingdc.com` or `http://localhost:3080` for local Jarvis |
+| `JARVIS_URL` | **Required** — Jarvis API endpoint (e.g. `https://jarvis.host.com`) |
 | `JARVIS_MODEL` | Optional spec override |
 | `PORT` | Express port (default `5500`) |
 

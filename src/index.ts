@@ -8,6 +8,8 @@ export class JarvisEmbed {
   private readonly iframeUrl: string;
   private readonly iframeOrigin: string;
 
+  private mountRoot: HTMLDivElement | null = null;
+  private statusOverlay: HTMLDivElement | null = null;
   private iframe: HTMLIFrameElement | null = null;
   private messageHandler: ((e: MessageEvent) => void) | null = null;
   private sdkReady = false;
@@ -83,8 +85,12 @@ export class JarvisEmbed {
       window.removeEventListener('message', this.messageHandler);
       this.messageHandler = null;
     }
+    this.statusOverlay?.remove();
+    this.statusOverlay = null;
     this.iframe?.remove();
     this.iframe = null;
+    this.mountRoot?.remove();
+    this.mountRoot = null;
     this.sdkReady = false;
     this.pendingMcpServers = null;
     this.pendingArtifactsButton = null;
@@ -92,6 +98,12 @@ export class JarvisEmbed {
   }
 
   private async start(): Promise<void> {
+    const container = this.resolveContainer();
+    if (!container) return;
+
+    const mountRoot = this.ensureMountRoot(container);
+    this.showLoadingOverlay();
+
     let token: string;
     try {
       token = this.config.provider === 'direct'
@@ -99,14 +111,13 @@ export class JarvisEmbed {
         : await this.exchangeToken(this.config);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
+      this.showErrorOverlay(error);
       this.config.onError?.(error);
       return;
     }
 
     if (this.destroyed) return;
 
-    const container = this.resolveContainer();
-    if (!container) return;
     const iframe = document.createElement('iframe');
     const chatUrl = new URL(this.iframeUrl);
     if (this.config.model && !chatUrl.searchParams.has('spec')) {
@@ -118,15 +129,26 @@ export class JarvisEmbed {
     }
     iframe.src = chatUrl.toString();
     iframe.title = 'Jarvis AI Assistant';
-    iframe.style.cssText = `width:${this.config.width ?? '100%'};height:${this.config.height ?? '600px'};border:none;display:block;`;
+    iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;background:transparent;';
+    let authSent = false;
 
     iframe.addEventListener('load', () => {
-      iframe.contentWindow?.postMessage({ type: 'SDK_AUTH', token }, this.iframeOrigin);
+      this.hideStatusOverlay();
+      authSent = false;
     });
 
     this.messageHandler = (e: MessageEvent) => {
       const isCorrectOrigin = e.origin === this.iframeOrigin;
-      if (!isCorrectOrigin) return;
+      const isCurrentIframe = e.source === iframe.contentWindow;
+      if (!isCorrectOrigin || !isCurrentIframe) return;
+
+      const isAuthReady = e.data?.type === 'SDK_AUTH_READY';
+      if (isAuthReady) {
+        if (authSent) return;
+        authSent = true;
+        iframe.contentWindow?.postMessage({ type: 'SDK_AUTH', token }, this.iframeOrigin);
+        return;
+      }
 
       const isSdkReady = e.data?.type === 'SDK_READY';
       if (!isSdkReady) {
@@ -167,7 +189,7 @@ export class JarvisEmbed {
     };
     window.addEventListener('message', this.messageHandler);
 
-    container.appendChild(iframe);
+    mountRoot.appendChild(iframe);
     this.iframe = iframe;
   }
 
@@ -184,9 +206,86 @@ export class JarvisEmbed {
     return document.body;
   }
 
-  private async exchangeToken(auth: AuthPayload): Promise<string> {
-    if (this.config.debug) console.log('[JarvisEmbed] Exchanging token, provider:', auth.provider);
+  private ensureMountRoot(container: HTMLElement): HTMLDivElement {
+    if (this.mountRoot) return this.mountRoot;
 
+    const mountRoot = document.createElement('div');
+    mountRoot.style.cssText = `position:relative;width:${this.config.width ?? '100%'};height:${this.config.height ?? '600px'};`;
+    container.appendChild(mountRoot);
+    this.mountRoot = mountRoot;
+    return mountRoot;
+  }
+
+  private showLoadingOverlay(): void {
+    const overlay = this.ensureStatusOverlay();
+    const spinner = document.createElement('div');
+    spinner.style.cssText = 'width:32px;height:32px;border:3px solid #d0d7de;border-top-color:#0969da;border-radius:9999px;animation:jarvis-embed-spin 0.8s linear infinite;';
+
+    const title = document.createElement('div');
+    title.textContent = 'Loading Jarvis...';
+    title.style.cssText = 'font-size:14px;font-weight:600;color:#111827;';
+
+    const subtitle = document.createElement('div');
+    subtitle.textContent = 'Authenticating your session.';
+    subtitle.style.cssText = 'font-size:13px;color:#4b5563;';
+
+    this.injectSpinnerKeyframes();
+    this.renderStatusOverlay(overlay, [spinner, title, subtitle]);
+  }
+
+  private showErrorOverlay(error: Error): void {
+    const overlay = this.ensureStatusOverlay();
+
+    const title = document.createElement('div');
+    title.textContent = 'Unable to load Jarvis';
+    title.style.cssText = 'font-size:14px;font-weight:600;color:#b42318;';
+
+    const message = document.createElement('div');
+    message.textContent = error.message || 'Something went wrong while preparing the chat.';
+    message.style.cssText = 'font-size:13px;line-height:1.5;color:#4b5563;word-break:break-word;';
+
+    this.renderStatusOverlay(overlay, [title, message]);
+  }
+
+  private hideStatusOverlay(): void {
+    this.statusOverlay?.remove();
+    this.statusOverlay = null;
+  }
+
+  private ensureStatusOverlay(): HTMLDivElement {
+    if (!this.mountRoot) {
+      throw new Error('Mount root is not initialized');
+    }
+
+    if (this.statusOverlay) return this.statusOverlay;
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(255,255,255,0.92);z-index:1;';
+    this.mountRoot.appendChild(overlay);
+    this.statusOverlay = overlay;
+    return overlay;
+  }
+
+  private renderStatusOverlay(overlay: HTMLDivElement, children: HTMLElement[]): void {
+    overlay.replaceChildren();
+
+    const card = document.createElement('div');
+    card.style.cssText = 'display:flex;max-width:360px;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 20px;border-radius:12px;background:#ffffff;box-shadow:0 8px 24px rgba(15,23,42,0.12);';
+    card.replaceChildren(...children);
+
+    overlay.appendChild(card);
+  }
+
+  private injectSpinnerKeyframes(): void {
+    if (document.getElementById('jarvis-embed-spinner-style')) return;
+
+    const style = document.createElement('style');
+    style.id = 'jarvis-embed-spinner-style';
+    style.textContent = '@keyframes jarvis-embed-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
+  }
+
+  private async exchangeToken(auth: AuthPayload): Promise<string> {
     const body: AuthPayload = auth.provider === 'hmac'
       ? { provider: 'hmac', userId: auth.userId, timestamp: auth.timestamp, signature: auth.signature }
       : { provider: auth.provider, token: auth.token };
@@ -202,13 +301,46 @@ export class JarvisEmbed {
         body: JSON.stringify(body),
         signal: controller.signal,
       });
+    } catch (err) {
+      if (controller.signal.aborted) {
+        throw new Error('Token exchange timed out after 15 seconds.');
+      }
+      throw err instanceof Error ? err : new Error(String(err));
     } finally {
       clearTimeout(timeoutId);
     }
 
-    if (!res.ok) throw new Error(`Token exchange failed (HTTP ${res.status})`);
+    if (!res.ok) {
+      const errorMessage = await this.getErrorMessage(res);
+      throw new Error(errorMessage);
+    }
 
-    const data = await res.json() as { token: string };
+    const data = await res.json() as { token?: string };
+    if (!data.token) {
+      throw new Error('Token exchange succeeded but no token was returned.');
+    }
+
     return data.token;
+  }
+
+  private async getErrorMessage(res: Response): Promise<string> {
+    const fallbackMessage = `Token exchange failed (HTTP ${res.status})`;
+
+    try {
+      const data = await res.clone().json() as { error?: string; message?: string };
+      if (typeof data.message === 'string' && data.message.trim()) return data.message;
+      if (typeof data.error === 'string' && data.error.trim()) return data.error;
+    } catch {
+      // Ignore JSON parse failures and fall back to text/status.
+    }
+
+    try {
+      const text = (await res.text()).trim();
+      if (text) return text;
+    } catch {
+      // Ignore text parse failures and fall back to status.
+    }
+
+    return fallbackMessage;
   }
 }

@@ -47,4 +47,4 @@ app.post('/api/google/token', async (req, res) => {
 app.get('/redirect', (req, res) => res.sendFile(path.join(__dirname, 'redirect.html')));
 
 const port = process.env.PORT || 5500;
-app.listen(port, () => console.log(`Running at http://localhost:${port}`));
+app.listen(port);
